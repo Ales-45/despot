@@ -410,7 +410,7 @@
   const wildcardRules = [
     {
       name: "Greek Fire",
-      description: "A dice with value of 1 defeat an opposing dice with 6",
+      description: "A dice with value of 1 beats an opposing dice with 6",
       image: "fire.png",
     },
     {
