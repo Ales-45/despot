@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Despot rules." />
+  <title>Despot | Rules</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Despot, home">
+        <img class="brand-logo" src="images/logo.png" alt="" /><span>DESPOT</span>
+      </a>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link is-active" href="rules.html">Rules</a>
+      </nav>
+      <div class="header-account">
+        <span class="status-dot hidden" id="account-status" aria-hidden="true"></span>
+        <span class="hidden" id="account-label"></span>
+        <button class="button button-small button-outline" id="login-button" type="button">Login</button>
+        <button class="button button-small button-outline hidden" id="logout-button" type="button">Logout</button>
+      </div>
+    </header>
+
+    <main class="rules-page">
+      <section class="basic-rules">
+        <div class="basic-rule-list">
+          <article class="basic-rule">
+            <div>
+              <p>You have three d6, allocate in secret a max of 10 points as defender or 11 as attacker</p>
+            </div>
+            <div class="basic-rule-placeholder">
+              <img src="images/phase1.png" alt="Phase 1 rule illustration" />
+            </div>
+          </article>
+          <article class="basic-rule">
+            <div>
+              <p>Resolution is made from left to right from the attacker perspective, mirrowing dices and winning the
+                highest value or in the case of a tie the defender wins, two out of three sides are required to win the
+                bout</p>
+            </div>
+            <div class="basic-rule-placeholder">
+              <img src="images/phase2.png" alt="Phase 2 rule illustration" />
+            </div>
+          </article>
+          <article class="basic-rule">
+            <div>
+              <p>The game is a best out of 3 bouts</p>
+            </div>
+            <div class="basic-rule-placeholder">
+              <img src="images/phase3.png" alt="Phase 3 rule illustration" />
+            </div>
+          </article>
+        </div>
+      </section>
+      <section class="rules-carousel" aria-label="Rules carousel">
+        <button class="carousel-button" id="previous-rule" type="button" aria-label="Previous rule">‹</button>
+        <article class="rule-slide">
+          <div class="rule-placeholder">
+            <img id="rule-image" src="images/fire.png" alt="Greek Fire" />
+          </div>
+          <div class="rule-copy">
+            <h2 id="rule-name">Greek Fire</h2>
+            <p id="rule-description">A dice with value of 1 defeat an opposing dice with 6</p>
+          </div>
+        </article>
+        <button class="carousel-button" id="next-rule" type="button" aria-label="Next rule">›</button>
+      </section>
+      <div class="carousel-dots" id="carousel-dots" aria-label="Choose rule"></div>
+    </main>
+  </div>
+
+  <div class="modal-backdrop hidden" id="login-modal" role="presentation">
+    <section class="login-modal" role="dialog" aria-modal="true" aria-label="Login">
+      <button class="modal-close" id="modal-close" type="button" aria-label="Close login">×</button>
+      <form id="login-form">
+        <input id="username" name="username" type="text" placeholder="Username" autocomplete="username" maxlength="24"
+          required />
+        <p class="form-error hidden" id="form-error">Enter a valid username.</p>
+        <button class="button button-primary submit-button" type="submit">Login</button>
+      </form>
+    </section>
+  </div>
+  <div class="toast hidden" id="toast" role="status"></div>
+  <script src="script.js?v=10"></script>
+</body>
+
+</html>

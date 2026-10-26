@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Despot, una demo web de videojuego." />
+    <title>Despot | Demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=IM+Fell+English+SC&family=UnifrakturCook:wght@700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="site-shell">
+      <header class="site-header">
+        <a class="brand" href="index.html" aria-label="Despot, home">
+          <img class="brand-logo" src="images/logo.png" alt="" />
+          <span>DESPOT</span>
+        </a>
+
+        <nav class="main-nav" aria-label="Main navigation">
+          <a class="nav-link is-active" href="index.html">Home</a>
+          <a class="nav-link" href="rules.html">Rules</a>
+        </nav>
+
+        <div class="header-account">
+          <span class="status-dot hidden" id="account-status" aria-hidden="true"></span>
+          <span class="hidden" id="account-label"></span>
+          <button class="button button-small button-outline" id="login-button" type="button">
+            Login
+          </button>
+          <button class="button button-small button-outline hidden" id="logout-button" type="button">
+            Logout
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="page-view" id="home-page">
+          <div class="hero-copy">
+            <div class="hero-actions">
+              <button class="button button-primary button-play" id="play-button" type="button">
+                <span>Play</span>
+              </button>
+            </div>
+          </div>
+
+        </section>
+        <section class="game-view hidden" id="role-page" aria-labelledby="role-title">
+          <h1 id="role-title">Choose your role</h1>
+          <div class="role-options">
+            <button class="role-button" type="button" data-role="attack">Attack</button>
+            <button class="role-button" type="button" data-role="defense">Defense</button>
+          </div>
+        </section>
+        <section class="game-view hidden" id="allocation-page" aria-labelledby="allocation-title">
+          <h1 class="allocation-title" id="allocation-title">Allocate your forces: <strong id="points-remaining">7</strong></h1>
+          <div class="dice-board" id="dice-board"></div>
+          <button class="button button-primary battle-button" id="battle-button" type="button">Battle</button>
+        </section>
+        <section class="game-view hidden" id="round-page" aria-labelledby="round-title">
+          <div class="round-symbols hidden" id="round-symbols" aria-label="Rounds won"></div>
+          <h1 id="round-title">Round 1</h1>
+        </section>
+        <section class="game-view hidden" id="battle-page" aria-labelledby="battle-result">
+          <div class="battle-side opponent-side">
+            <div class="battle-dice" id="opponent-dice"></div>
+          </div>
+          <div class="battle-result" id="battle-result"></div>
+          <div class="resolution-slider hidden" id="resolution-slider">
+            <button class="resolution-slider-button" id="previous-resolution" type="button" aria-label="Previous allocation">‹</button>
+            <span id="resolution-stage">Initial allocation</span>
+            <button class="resolution-slider-button" id="next-resolution" type="button" aria-label="Next allocation">›</button>
+          </div>
+          <div class="battle-side">
+            <div class="battle-dice" id="player-dice"></div>
+          </div>
+          <button class="button button-primary next-round-button hidden" id="next-round-button" type="button">Next round</button>
+        </section>
+        <section class="game-view hidden" id="match-result-page">
+          <div class="match-result" id="match-result"></div>
+        </section>
+
+      </main>
+    </div>
+
+    <div class="modal-backdrop hidden" id="login-modal" role="presentation">
+      <section class="login-modal" role="dialog" aria-modal="true" aria-label="Login">
+        <button class="modal-close" id="modal-close" type="button" aria-label="Close login">×</button>
+        <form id="login-form">
+          <input id="username" name="username" type="text" placeholder="Username" autocomplete="username" maxlength="24" required />
+          <p class="form-error hidden" id="form-error">Enter a valid username.</p>
+          <button class="button button-primary submit-button" type="submit">Login</button>
+        </form>
+      </section>
+    </div>
+
+    <div class="toast hidden" id="toast" role="status"></div>
+    <script src="script.js?v=10"></script>
+  </body>
+</html>
