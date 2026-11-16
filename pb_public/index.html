@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blotto Bizantino</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="pocketbase.umd.js"></script>
+</head>
+
+<body>
+
+    <!-- HEADER MINIMALISTA -->
+    <header class="site-header">
+        <button id="btn-home" class="logo-slot" title="Inicio" aria-label="Inicio">
+            <span class="logo-placeholder">[ LOGO ]</span>
+        </button>
+
+        <nav class="header-nav">
+            <button id="btn-nav-rules" class="nav-link">Reglas</button>
+            <button id="btn-theme" class="nav-btn" title="Cambiar tema">Tema</button>
+            <button id="btn-lang" class="nav-btn" title="Idioma (Próximamente)">ES</button>
+            <button id="btn-auth" class="nav-btn nav-primary">Entrar</button>
+        </nav>
+    </header>
+
+    <!-- DIVISOR ORNAMENTAL RINCEAU (SVG puro, sin assets externos) -->
+    <div class="rinceau-divider" aria-hidden="true">
+        <svg viewBox="0 0 600 24" preserveAspectRatio="none">
+            <path d="M0,12 Q75,2 150,12 T300,12 T450,12 T600,12" fill="none" stroke="currentColor" stroke-width="1.2" />
+            <path d="M135,12 C135,5 148,5 148,12 C148,17 140,17 140,13" fill="none" stroke="currentColor"
+                stroke-width="1" />
+            <path d="M285,12 C285,5 298,5 298,12 C298,17 290,17 290,13" fill="none" stroke="currentColor"
+                stroke-width="1" />
+            <path d="M435,12 C435,5 448,5 448,12 C448,17 440,17 440,13" fill="none" stroke="currentColor"
+                stroke-width="1" />
+        </svg>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL DINÁMICO -->
+    <main class="main-stage">
+
+        <!-- VISTA 1: HOME / LISTADO DE PARTIDAS -->
+        <section id="view-lobby" class="view active">
+            <div class="lobby-actions">
+                <button id="btn-create-match" class="btn-solid">Crear Partida (Bo5)</button>
+                <div class="join-box">
+                    <input type="text" id="input-room-code" maxlength="4" placeholder="CÓDIGO" autocomplete="off">
+                    <button id="btn-join-match" class="btn-outline">Unirse</button>
+                </div>
+            </div>
+
+            <div class="rinceau-divider subtle" aria-hidden="true">
+                <svg viewBox="0 0 600 24" preserveAspectRatio="none">
+                    <path d="M0,12 Q150,4 300,12 T600,12" fill="none" stroke="currentColor" stroke-width="1" />
+                </svg>
+            </div>
+
+            <div class="open-matches-block">
+                <h2>Salas Abiertas</h2>
+                <ul id="matches-list" class="matches-list">
+                    <li class="empty-msg">Buscando partidas disponibles...</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- VISTA 2: TABLERO DE JUEGO (Sin patrones Rinceau internos) -->
+        <section id="view-board" class="view">
+            <!-- Barra superior de estado de partida -->
+            <div class="match-hud">
+                <div class="score-pill">
+                    <span>Atacante</span>
+                    <strong id="hud-att-score">0</strong>
+                </div>
+                <div class="round-center">
+                    <span id="hud-room-code" class="room-tag">----</span>
+                    <span id="hud-round-label">Ronda 1</span>
+                    <div id="hud-timer" class="timer-display">20s</div>
+                </div>
+                <div class="score-pill">
+                    <span>Defensor</span>
+                    <strong id="hud-def-score">0</strong>
+                </div>
+            </div>
+
+            <!-- Sub-fase A: Espera de rival -->
+            <div id="stage-waiting" class="board-substage hidden">
+                <p>Comparte el código de sala: <strong id="wait-code-display">----</strong></p>
+                <p class="muted">Esperando oponente...</p>
+            </div>
+
+            <!-- Sub-fase B: Elección de Rol (Fase 1) -->
+            <div id="stage-roles" class="board-substage hidden">
+                <h3>Elige tu Rol</h3>
+                <p class="muted">Si ambos eligen lo mismo, una moneda decidirá.</p>
+                <div class="role-buttons">
+                    <button class="btn-solid" data-role="ATT">Atacante (11 pts)</button>
+                    <button class="btn-outline" data-role="DEF">Defensor (10 pts)</button>
+                </div>
+                <p id="role-status-msg" class="muted"></p>
+            </div>
+
+            <!-- Sub-fase C: Combate en Espejo (Fases 2 y 3) -->
+            <div id="stage-combat" class="board-substage hidden">
+                <!-- Pista privada de Ballesteros (solo aparece si aplica) -->
+                <div id="ballesteros-banner" class="hint-banner hidden"></div>
+
+                <!-- Formación Rival (Arriba) -->
+                <div class="army-row opponent-row">
+                    <div class="section-slot">
+                        <span class="slot-label" id="opp-label-0">Retaguardia</span>
+                        <div class="die-box opp-die" id="opp-die-0">?</div>
+                    </div>
+                    <div class="section-slot">
+                        <span class="slot-label" id="opp-label-1">Centro</span>
+                        <div class="die-box opp-die" id="opp-die-1">?</div>
+                    </div>
+                    <div class="section-slot">
+                        <span class="slot-label" id="opp-label-2">Vanguardia</span>
+                        <div class="die-box opp-die" id="opp-die-2">?</div>
+                    </div>
+                </div>
+
+                <!-- Línea de choque (Resultados de cada sección) -->
+                <div class="clash-row">
+                    <div class="clash-indicator" id="clash-0">-</div>
+                    <div class="clash-indicator" id="clash-1">-</div>
+                    <div class="clash-indicator" id="clash-2">-</div>
+                </div>
+
+                <!-- Formación Propia (Abajo - Izquierda a Derecha = Vanguardia a Retaguardia si eres Atacante) -->
+                <div class="army-row player-row">
+                    <div class="section-slot">
+                        <div class="die-control">
+                            <button class="step-btn" data-idx="0" data-delta="1">+</button>
+                            <div class="die-box player-die" id="my-die-0">4</div>
+                            <button class="step-btn" data-idx="0" data-delta="-1">-</button>
+                        </div>
+                        <span class="slot-label" id="my-label-0">Vanguardia</span>
+                    </div>
+                    <div class="section-slot">
+                        <div class="die-control">
+                            <button class="step-btn" data-idx="1" data-delta="1">+</button>
+                            <div class="die-box player-die" id="my-die-1">4</div>
+                            <button class="step-btn" data-idx="1" data-delta="-1">-</button>
+                        </div>
+                        <span class="slot-label" id="my-label-1">Centro</span>
+                    </div>
+                    <div class="section-slot">
+                        <div class="die-control">
+                            <button class="step-btn" data-idx="2" data-delta="1">+</button>
+                            <div class="die-box player-die" id="my-die-2">3</div>
+                            <button class="step-btn" data-idx="2" data-delta="-1">-</button>
+                        </div>
+                        <span class="slot-label" id="my-label-2">Retaguardia</span>
+                    </div>
+                </div>
+
+                <!-- Controles de Presupuesto, Restricción y Fijar -->
+                <div class="command-bar">
+                    <div class="budget-info">
+                        <span>Puntos: <strong id="points-used">11</strong> / <span id="points-max">11</span></span>
+                        <span id="constraint-badge" class="constraint-tag">Formación Libre</span>
+                    </div>
+                    <button id="btn-lock-dice" class="btn-solid">Fijar Formación</button>
+                </div>
+
+                <!-- Registro breve de resolución -->
+                <div id="resolution-feed" class="resolution-feed"></div>
+            </div>
+        </section>
+
+        <!-- VISTA 3: REGLAS -->
+        <section id="view-rules" class="view">
+            <h2>Reglas de Combate (Bo5)</h2>
+            <div class="rules-grid">
+                <article>
+                    <h3>1. Roles y Presupuesto</h3>
+                    <p>El <strong>Atacante</strong> reparte hasta <strong>11 puntos</strong> en 3 dados (1-6). El
+                        <strong>Defensor</strong> reparte hasta <strong>10 puntos</strong> y gana todos los empates de
+                        sección.</p>
+                </article>
+                <article>
+                    <h3>2. Orden y Desbandada</h3>
+                    <p>Quien gana una ronda entra en <strong>Orden</strong> (obligado a jugar al menos un par). Quien
+                        pierde entra en <strong>Desbandada</strong> (los 3 dados deben ser distintos).</p>
+                </article>
+                <article>
+                    <h3>3. Las 5 Crisóbulas</h3>
+                    <ul>
+                        <li><strong>Fuego Griego:</strong> Un <code>1</code> derrota a un <code>6</code>.</li>
+                        <li><strong>Almogávar:</strong> Un dado &ge; 4 que duplique al rival suma <code>+1</code> al
+                            siguiente dado aliado (izquierda a derecha). En retaguardia atacante, gana rondas empatadas.
+                        </li>
+                        <li><strong>Turcopolos:</strong> Fijar exactamente 3 puntos bajo tu límite reemplaza tu dado
+                            menor por <code>1d6</code> aleatorio.</li>
+                        <li><strong>Varegos:</strong> Ganar los 3 enfrentamientos (3-0) otorga <strong>2 puntos</strong>
+                            de ronda.</li>

@@ -1,0 +1,495 @@
+/* ============================================================================
+   ESTÉTICA MINIMALISTA (UEDA) + TEMAS OSCURO/CLARO
+   ============================================================================ */
+:root[data-theme="dark"] {
+    --bg: #111214;
+    --surface: #191b1f;
+    --text: #e6e4df;
+    --muted: #8a8882;
+    --accent: #c5a059;       /* Oro bizantino apagado */
+    --border: #2c2f36;
+    --win: #5a9e6f;
+    --loss: #b85450;
+}
+
+:root[data-theme="light"] {
+    --bg: #f4f1ea;           /* Pergamino claro */
+    --surface: #eae5d9;
+    --text: #1c1b18;
+    --muted: #6b675e;
+    --accent: #8f6b29;
+    --border: #d1cab9;
+    --win: #2e7d47;
+    --loss: #a63a37;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ============================================================================
+   HEADER MINIMALISTA
+   ============================================================================ */
+.site-header {
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo-slot {
+    background: none;
+    border: 1px dashed var(--border);
+    color: var(--accent);
+    padding: 0.45rem 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    transition: border-color 0.2s ease;
+}
+
+.logo-slot:hover {
+    border-color: var(--accent);
+}
+
+.header-nav {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.nav-link,
+.nav-btn {
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 0.95rem;
+    cursor: pointer;
+    padding: 0.35rem 0.65rem;
+    transition: color 0.2s ease;
+}
+
+.nav-link:hover,
+.nav-btn:hover {
+    color: var(--accent);
+}
+
+.nav-primary {
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    border-radius: 3px;
+}
+
+/* ============================================================================
+   DIVISOR ORNAMENTAL RINCEAU (Solo entre secciones principales)
+   ============================================================================ */
+.rinceau-divider {
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+    color: var(--accent);
+    opacity: 0.55;
+    height: 24px;
+    padding: 0 1.5rem;
+}
+
+.rinceau-divider.subtle {
+    opacity: 0.3;
+    margin: 2.25rem 0;
+    padding: 0;
+}
+
+.rinceau-divider svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* ============================================================================
+   ESCENARIO PRINCIPAL AMPLIO Y SIN SATURACIÓN
+   ============================================================================ */
+.main-stage {
+    max-width: 960px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem;
+    flex: 1;
+}
+
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* BOTONES BASE */
+.btn-solid {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.btn-solid:hover:not(:disabled) {
+    opacity: 0.9;
+}
+
+.btn-solid:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 0.7rem 1.4rem;
+    font-size: 0.95rem;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* ============================================================================
+   VISTA 1: LOBBY / LISTADO DE PARTIDAS
+   ============================================================================ */
+.lobby-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.join-box {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.join-box input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.65rem;
+    width: 120px;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 700;
+    border-radius: 3px;
+}
+
+.join-box input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.open-matches-block h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+}
+
+.matches-list {
+    list-style: none;
+    margin-top: 1.25rem;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.matches-list li {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1rem 1.35rem;
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.empty-msg {
+    color: var(--muted);
+    justify-content: center !important;
+    border-style: dashed !important;
+}
+
+/* ============================================================================
+   VISTA 2: TABLERO DE JUEGO (Limpio, táctil, sin adornos internos)
+   ============================================================================ */
+.match-hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+}
+
+.score-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 80px;
+}
+
+.score-pill span {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+}
+
+.score-pill strong {
+    font-size: 2rem;
+    color: var(--accent);
+    line-height: 1.2;
+}
+
+.round-center {
+    text-align: center;
+}
+
+.room-tag {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.18em;
+    margin-bottom: 0.2rem;
+}
+
+.timer-display {
+    font-size: 1.75rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    margin-top: 0.2rem;
+}
+
+.board-substage {
+    text-align: center;
+    padding: 2rem 0;
+}
+
+.role-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1.75rem;
+}
+
+/* FORMACIÓN EN ESPEJO */
+.hint-banner {
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    color: var(--accent);
+    padding: 0.65rem 1.2rem;
+    margin-bottom: 2rem;
+    display: inline-block;
+    border-radius: 3px;
+    font-size: 0.9rem;
+}
+
+.army-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 540px;
+    margin: 0 auto;
+}
+
+.section-slot {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.slot-label {
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.die-box {
+    width: 76px;
+    height: 76px;
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.1rem;
+    font-weight: 700;
+    user-select: none;
+    transition: border-color 0.2s ease, transform 0.15s ease;
+}
+
+.player-die {
+    border-color: var(--accent);
+}
+
+.die-control {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.step-btn {
+    width: 48px;
+    height: 28px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: 1rem;
+    transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.step-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.clash-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    max-width: 540px;
+    margin: 1.5rem auto;
+}
+
+.clash-indicator {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+}
+
+.clash-indicator.win {
+    color: var(--win);
+}
+
+.clash-indicator.loss {
+    color: var(--loss);
+}
+
+.command-bar {
+    margin-top: 2.25rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+}
+
+.budget-info {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.constraint-tag {
+    font-size: 0.85rem;
+    padding: 0.3rem 0.75rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+}
+
+.resolution-feed {
+    margin-top: 1.75rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+/* ============================================================================
+   VISTA 3 Y 4: REGLAS Y PERFIL
+   ============================================================================ */
+.rules-grid {
+    display: grid;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.rules-grid article {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    border-radius: 4px;
+}
+
+.rules-grid h3 {
+    color: var(--accent);
+    margin-bottom: 0.6rem;
+    font-size: 1.05rem;
+}
+
+.rules-grid ul {
+    margin-left: 1.25rem;
+    margin-top: 0.6rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.muted {
+    color: var(--muted);
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 600px) {
+    .army-row,
+    .clash-row {
+        gap: 0.75rem;
+    }
+
+    .die-box {
+        width: 64px;
+        height: 64px;
+        font-size: 1.75rem;
+    }
+
+    .lobby-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
