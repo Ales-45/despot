@@ -20,6 +20,43 @@ const state = {
     lockedLocally: false
 };
 
+const translations = {
+    ES: {
+        rules: "Reglas", login: "Entrar", createMatch: "Crear partida",
+        openRooms: "Salas abiertas", combatRules: "Reglas de Combate",
+        username: "Nombre de usuario", save: "Guardar", logout: "Cerrar sesión",
+        deleteAccount: "Eliminar cuenta"
+    },
+    EN: {
+        rules: "Rules", login: "Login", createMatch: "Create match",
+        openRooms: "Open rooms", combatRules: "Combat Rules",
+        username: "Username", save: "Save", logout: "Log out",
+        deleteAccount: "Delete account"
+    },
+    IT: {
+        rules: "Regole", login: "Accedi", createMatch: "Crea partita",
+        openRooms: "Stanze aperte", combatRules: "Regole di combattimento",
+        username: "Nome utente", save: "Salva", logout: "Esci",
+        deleteAccount: "Elimina account"
+    }
+};
+
+function getErrorMessage(error, fallback) {
+    const language = languageButton.dataset.language;
+    const message = error?.response?.message || error?.message || "";
+    if (message.includes("Failed to") || message.includes("Something went wrong")) {
+        return language === "EN" ? fallback.en : language === "IT" ? fallback.it : fallback.es;
+    }
+    return message || fallback.es;
+}
+
+function applyTranslations() {
+    const language = translations[languageButton.dataset.language] || translations.ES;
+    document.querySelectorAll("[data-i18n]").forEach((element) => {
+        element.textContent = language[element.dataset.i18n];
+    });
+}
+
 // ----------------------------------------------------------------------------
 // 1. NAVEGACIÓN, TEMA E IDIOMA (UI Shell)
 // ----------------------------------------------------------------------------
@@ -38,7 +75,7 @@ document.getElementById("btn-nav-rules").addEventListener("click", () => {
 });
 
 document.getElementById("btn-auth").addEventListener("click", () => {
-    if (pb.authStore.isValid) showView("view-profile");
+    if (pb.authStore.isValid) window.location.href = "profile.html";
     else loginWithGoogle();
 });
 
@@ -68,6 +105,7 @@ languageMenu.addEventListener("click", (event) => {
     localStorage.setItem("despot-language", next);
     languageMenu.hidden = true;
     languageButton.setAttribute("aria-expanded", "false");
+    applyTranslations();
 });
 document.addEventListener("click", () => {
     languageMenu.hidden = true;
@@ -89,11 +127,11 @@ async function loginWithGoogle() {
     try {
         await pb.collection("users").authWithOAuth2({
             provider: "google",
-            createData: {
-                name: "Jugador",
-                username: `jugador_${Date.now().toString(36)}`
+            queryParams: {
+                scope: "openid email"
             }
         });
+        await clearProviderProfileData();
         updateAuthButton();
         showView("view-lobby");
         loadOpenMatches();
@@ -103,39 +141,33 @@ async function loginWithGoogle() {
     }
 }
 
-function updateAuthButton() {
-    const btn = document.getElementById("btn-auth");
-    if (pb.authStore.isValid && pb.authStore.model) {
-        const username = pb.authStore.model.username || pb.authStore.model.name || "Perfil";
-        const selectedAvatar = localStorage.getItem("despot-avatar") || "assets/profile/prof01.svg";
-        btn.innerHTML = `<img src="${selectedAvatar}" alt="${username}">`;
-        btn.setAttribute("aria-label", username);
-        document.getElementById("profile-username").textContent = username;
-        document.getElementById("profile-email").textContent = pb.authStore.model.email || "";
-        document.getElementById("profile-avatar").src = selectedAvatar;
-    } else {
-        btn.textContent = "Entrar";
-        document.getElementById("profile-username").textContent = "Jugador";
-        document.getElementById("profile-email").textContent = "";
+async function clearProviderProfileData() {
+    if (!pb.authStore.model) return;
+    try {
+        const updated = await pb.collection("users").update(pb.authStore.model.id, {
+            name: "",
+            avatar: ""
+        });
+        pb.authStore.save(pb.authStore.token, updated);
+    } catch (error) {
+        console.error("No se pudieron limpiar los datos del proveedor:", error);
     }
 }
 
-const profileAvatarGrid = document.getElementById("profile-avatar-grid");
-for (let index = 1; index <= 19; index += 1) {
-    const number = String(index).padStart(2, "0");
-    const source = `assets/profile/prof${number}.svg`;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "profile-avatar-option";
-    button.innerHTML = `<img src="${source}" alt="Perfil ${index}">`;
-    button.addEventListener("click", () => {
-        localStorage.setItem("despot-avatar", source);
-        document.querySelectorAll(".profile-avatar-option").forEach((item) => item.classList.remove("is-active"));
-        button.classList.add("is-active");
-        document.getElementById("profile-avatar").src = source;
-        updateAuthButton();
-    });
-    profileAvatarGrid.append(button);
+function updateAuthButton() {
+    const btn = document.getElementById("btn-auth");
+    if (pb.authStore.isValid && pb.authStore.model) {
+        const username = pb.authStore.model.username || "Perfil";
+        const selectedAvatar = pb.authStore.model.profile_avatar || "assets/profile/prof01.svg";
+        btn.replaceChildren();
+        const image = document.createElement("img");
+        image.src = selectedAvatar;
+        image.alt = "Perfil";
+        btn.append(image);
+        btn.setAttribute("aria-label", username);
+    } else {
+        btn.textContent = translations[languageButton.dataset.language]?.login || "Entrar";
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -150,7 +182,7 @@ async function loadOpenMatches() {
     try {
         const res = await pb.collection("matches").getList(1, 15, {
             filter: 'status = "WAITING"',
-            sort: "-created"
+            sort: "-id"
         });
 
         if (res.items.length === 0) {
@@ -164,14 +196,18 @@ async function loadOpenMatches() {
             li.dataset.matchRow = "true";
             li.dataset.search = `${m.room_code || ""} ${m.host_name || ""}`.toLowerCase();
             li.innerHTML = `
-                <span>Sala <strong>${m.room_code}</strong> (Bo5)</span>
+                <span>Sala <strong>${m.room_code}</strong></span>
                 <button class="btn-outline" data-join-id="${m.id}">Unirse</button>
             `;
             li.querySelector("button").addEventListener("click", () => joinMatchById(m.id));
             listEl.appendChild(li);
         });
     } catch (err) {
-        listEl.innerHTML = '<li class="empty-msg">Conecta PocketBase para ver salas.</li>';
+        listEl.innerHTML = `<li class="empty-msg">${getErrorMessage(err, {
+            es: "No se pudieron cargar las salas.",
+            en: "Rooms could not be loaded.",
+            it: "Impossibile caricare le stanze."
+        })}</li>`;
     }
 }
 
@@ -197,22 +233,35 @@ document.getElementById("btn-close-create-match").addEventListener("click", () =
 
 document.getElementById("private-match").addEventListener("change", (event) => {
     document.getElementById("pin-row").classList.toggle("hidden", !event.target.checked);
+    if (event.target.checked) document.getElementById("bot-match").checked = false;
+});
+
+document.getElementById("bot-match").addEventListener("change", (event) => {
+    if (event.target.checked) {
+        document.getElementById("private-match").checked = false;
+        document.getElementById("pin-row").classList.add("hidden");
+    }
 });
 
 document.getElementById("btn-start-created-match").addEventListener("click", async () => {
     try {
         await ensureAuth();
         const isPrivate = document.getElementById("private-match").checked;
+        const isBot = document.getElementById("bot-match").checked;
         const pin = document.getElementById("match-pin").value.trim();
-        if (isPrivate && !/^\d{4,8}$/.test(pin)) {
+        if (isPrivate && !isBot && !/^\d{4,8}$/.test(pin)) {
             alert("El PIN debe tener entre 4 y 8 dígitos.");
             return;
         }
         const code = Math.random().toString(36).substring(2, 6).toUpperCase();
         const match = await pb.collection("matches").create({
             room_code: code,
+            is_private: isPrivate,
+            pin_hash: "",
+            is_bot: isBot,
+            bot_name: isBot ? "Nash" : "",
             player_1: pb.authStore.model.id,
-            status: "WAITING",
+            status: isBot ? "ROLE_SELECT" : "WAITING",
             p1_role_choice: "NONE",
             p2_role_choice: "NONE",
             att_score: 0,
@@ -222,7 +271,11 @@ document.getElementById("btn-start-created-match").addEventListener("click", asy
         document.getElementById("create-match-modal").classList.add("hidden");
         enterMatch(match.id);
     } catch (error) {
-        alert(error.message || "No se pudo crear la partida.");
+        alert(getErrorMessage(error, {
+            es: "No se pudo crear la partida.",
+            en: "The match could not be created.",
+            it: "Impossibile creare la partita."
+        }));
     }
 });
 
@@ -320,6 +373,8 @@ document.querySelectorAll("#stage-roles button").forEach(btn => {
 
         document.getElementById("role-status-msg").textContent = "Rol fijado. Esperando al rival...";
         await pb.collection("matches").update(state.match.id, { [field]: choice });
+        state.match = await pb.collection("matches").getOne(state.match.id);
+        renderMatchState();
     });
 });
 
@@ -492,5 +547,7 @@ function animateRoundResolution(round, isAtt) {
     }, 2100);
 }
 // Arranque inicial
+applyTranslations();
 updateAuthButton();
 loadOpenMatches();
+if (window.location.hash === "#rules") showView("view-rules");

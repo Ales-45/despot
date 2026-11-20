@@ -35,8 +35,8 @@ migrate((app) => {
       { name: "status", type: "select", required: true, values: ["WAITING", "ROLE_SELECT", "PLAYING", "FINISHED"] },
       { name: "p1_role_choice", type: "select", required: true, values: ["NONE", "ATT", "DEF"] },
       { name: "p2_role_choice", type: "select", required: true, values: ["NONE", "ATT", "DEF"] },
-      { name: "att_score", type: "number", required: true, min: 0, max: 3 },
-      { name: "def_score", type: "number", required: true, min: 0, max: 3 },
+      { name: "att_score", type: "number", required: false, min: 0, max: 3 },
+      { name: "def_score", type: "number", required: false, min: 0, max: 3 },
       { name: "current_round", type: "number", required: true, min: 1, max: 5 },
     ],
     indexes: [

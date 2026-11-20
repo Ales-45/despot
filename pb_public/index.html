@@ -5,12 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Despot</title>
+    <link rel="icon" href="assets/icon/favicon.svg" type="image/svg+xml">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="pocketbase.umd.js"></script>
-    <script src="app.js" defer></script>
+    <script src="app.js?v=3" defer></script>
 </head>
 
 <body>
@@ -22,7 +23,7 @@
         </button>
 
         <nav class="header-nav">
-            <button id="btn-nav-rules" class="nav-link">Reglas</button>
+            <button id="btn-nav-rules" class="nav-link" data-i18n="rules">Reglas</button>
             <button id="btn-theme" class="theme-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
             <div class="lang-dropdown">
                 <button id="btn-lang" class="nav-link lang-btn" type="button" aria-expanded="false"
@@ -33,7 +34,7 @@
                     <li><button type="button" data-lang="IT">IT</button></li>
                 </ul>
             </div>
-            <button id="btn-auth" class="profile-button" type="button" title="Perfil">Entrar</button>
+            <button id="btn-auth" class="profile-button" type="button" title="Perfil" data-i18n="login">Entrar</button>
         </nav>
     </header>
 
@@ -64,7 +65,7 @@
         <!-- VISTA 1: HOME / LISTADO DE PARTIDAS -->
         <section id="view-lobby" class="view active">
             <div class="lobby-actions">
-                <button id="btn-create-match" class="btn-solid">Crear Partida (Bo5)</button>
+                <button id="btn-create-match" class="btn-solid" data-i18n="createMatch">Crear partida</button>
                 <div class="join-box">
                     <input type="text" id="input-room-code" maxlength="4" placeholder="CÓDIGO" autocomplete="off">
                     <button id="btn-join-match" class="btn-outline">Unirse</button>
@@ -82,7 +83,7 @@
             </div>
 
             <div class="open-matches-block">
-                <h2>Salas Abiertas</h2>
+                <h2 data-i18n="openRooms">Salas abiertas</h2>
                 <ul id="matches-list" class="matches-list">
                     <li class="empty-msg">Buscando partidas disponibles...</li>
                 </ul>
@@ -195,19 +196,9 @@
             </div>
         </section>
 
-        <!-- VISTA 3: PERFIL -->
-        <section id="view-profile" class="view">
-            <div class="profile-card">
-                <img id="profile-avatar" class="profile-avatar" src="assets/profile/prof01.svg" alt="Avatar">
-                <h2 id="profile-username">Jugador</h2>
-                <p id="profile-email" class="muted"></p>
-                <div id="profile-avatar-grid" class="profile-avatar-grid" aria-label="Elegir imagen de perfil"></div>
-            </div>
-        </section>
-
-        <!-- VISTA 4: REGLAS -->
+        <!-- VISTA 3: REGLAS -->
         <section id="view-rules" class="view">
-            <h2>Reglas de Combate (Bo5)</h2>
+            <h2 data-i18n="combatRules">Reglas de Combate</h2>
             <div class="rules-grid">
                 <article>
                     <h3>1. Roles y Presupuesto</h3>
@@ -250,6 +241,10 @@
             <label class="switch-row">
                 <input id="private-match" type="checkbox">
                 <span>Partida privada</span>
+            </label>
+            <label class="switch-row">
+                <input id="bot-match" type="checkbox">
+                <span>Jugar contra la máquina</span>
             </label>
             <label id="pin-row" class="pin-row hidden">
                 <span>PIN</span>

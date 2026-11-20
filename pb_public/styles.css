@@ -40,6 +40,13 @@ body {
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
+button,
+input,
+select,
+textarea {
+    font: inherit;
+}
+
 /* ============================================================================
    HEADER MINIMALISTA
    ============================================================================ */
@@ -160,18 +167,19 @@ body {
    DIVISOR ORNAMENTAL RINCEAU (Solo entre secciones principales)
    ============================================================================ */
 .rinceau-divider {
-    max-width: 960px;
-    width: 100%;
-    margin: 0 auto;
+    width: 100vw;
+    max-width: none;
+    margin-left: calc(50% - 50vw);
     color: var(--accent);
     opacity: 0.55;
     height: 24px;
-    padding: 0 1.5rem;
+    padding: 0;
 }
 
 .rinceau-divider.subtle {
     opacity: 0.3;
     margin: 2.25rem 0;
+    margin-left: calc(50% - 50vw);
     padding: 0;
 }
 
@@ -343,13 +351,30 @@ body {
 }
 
 .profile-card {
-    max-width: 520px;
+    max-width: 640px;
     margin: 0 auto;
     border: 1px solid var(--border);
     background: var(--surface);
     border-radius: 4px;
     padding: 1.5rem;
     text-align: center;
+}
+
+.profile-page {
+    padding-top: 1.5rem;
+}
+
+.profile-card h1 {
+    color: var(--accent);
+    font-size: 1.7rem;
+    font-weight: 400;
+}
+
+.profile-section-title {
+    margin-top: 1.5rem;
+    color: var(--muted);
+    font-size: 1rem;
+    font-weight: 400;
 }
 
 .profile-avatar {
@@ -369,6 +394,61 @@ body {
     justify-content: center;
     gap: 0.65rem;
     margin-top: 1.25rem;
+}
+
+.profile-field {
+    display: grid;
+    gap: 0.45rem;
+    margin: 1.25rem auto 0;
+    max-width: 300px;
+    text-align: left;
+    color: var(--muted);
+}
+
+.profile-field input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.65rem 0.75rem;
+    border-radius: 3px;
+}
+
+.profile-field input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.profile-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.65rem;
+    margin-top: 1.25rem;
+}
+
+.btn-danger {
+    background: transparent;
+    color: var(--loss);
+    border: 1px solid var(--loss);
+    padding: 0.7rem 1.4rem;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background: var(--loss);
+    color: var(--bg);
+}
+
+.profile-status {
+    min-height: 1.5em;
+    color: var(--muted);
+    margin-top: 0.85rem;
+}
+
+.profile-status.is-error {
+    color: var(--loss);
 }
 
 .profile-avatar-option {

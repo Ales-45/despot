@@ -5,12 +5,75 @@
 // Todas las partidas son obligatoriamente Bo5 (primero en ganar 3 rondas)
 // ============================================================================
 
+onRecordUpdateRequest((e) => {
+    const match = e.record;
+    if (match.get("is_bot") !== true) return;
+    if (match.get("p1_role_choice") === "NONE") return;
+    if (match.get("status") !== "ROLE_SELECT") return;
+
+    const humanId = match.get("player_1");
+    const choice = match.get("p1_role_choice");
+    match.set("attacker_id", choice === "ATT" ? humanId : null);
+    match.set("defender_id", choice === "DEF" ? humanId : null);
+    match.set("status", "PLAYING");
+    match.set("current_round", 1);
+    $app.save(match);
+
+    let existingRound = null;
+    try {
+        existingRound = $app.findFirstRecordByFilter(
+            "rounds",
+            "match_id = {:m} && round_number = 1",
+            { m: match.id }
+        );
+    } catch (_) {}
+    if (!existingRound) {
+        const roundsCol = $app.findCollectionByNameOrId("rounds");
+        const round1 = new Record(roundsCol);
+        round1.set("match_id", match.id);
+        round1.set("round_number", 1);
+        round1.set("phase", "LOCKING");
+        round1.set("ends_at", new Date(Date.now() + 20000).toISOString());
+        round1.set("att_constraint", "FREE");
+        round1.set("def_constraint", "FREE");
+        round1.set("att_dice", null);
+        round1.set("def_dice", null);
+        round1.set("first_locker", "NONE");
+        round1.set("ballesteros_hint", "NONE");
+        $app.save(round1);
+    }
+}, "matches");
+
 // 1. RESOLUCIÓN DE ROLES (Fase 1 -> Fase 2: Ronda 1)
 onRecordAfterUpdateSuccess((e) => {
     const match = e.record;
     if (match.get("status") !== "ROLE_SELECT") return;
 
     const p1Choice = match.get("p1_role_choice");
+    if (match.get("is_bot") === true && p1Choice !== "NONE") {
+        const humanId = match.get("player_1");
+        match.set("attacker_id", p1Choice === "ATT" ? humanId : null);
+        match.set("defender_id", p1Choice === "DEF" ? humanId : null);
+        match.set("status", "PLAYING");
+        match.set("current_round", 1);
+        $app.save(match);
+
+        const roundsCol = $app.findCollectionByNameOrId("rounds");
+        const round1 = new Record(roundsCol);
+        round1.set("match_id", match.id);
+        round1.set("round_number", 1);
+        round1.set("phase", "LOCKING");
+        round1.set("ends_at", new Date(Date.now() + 20000).toISOString());
+        round1.set("att_constraint", "FREE");
+        round1.set("def_constraint", "FREE");
+        round1.set("att_dice", null);
+        round1.set("def_dice", null);
+        round1.set("first_locker", "NONE");
+        round1.set("ballesteros_hint", "NONE");
+        $app.save(round1);
+        return;
+    }
+
     const p2Choice = match.get("p2_role_choice");
     const p2Id = match.get("player_2");
 
@@ -84,6 +147,63 @@ onRecordUpdateRequest((e) => {
     const now = Date.now();
     const endsAtMs = new Date(round.get("ends_at")).getTime();
     const isTimeoutCall = round.get("force_timeout") === true && now >= endsAtMs;
+
+    if (match.get("is_bot") === true) {
+        const attPlays = [
+            [[2,5,4],0.169], [[5,5,1],0.146], [[2,4,5],0.107],
+            [[4,2,5],0.104], [[5,4,2],0.094], [[6,3,2],0.087],
+            [[3,6,2],0.065], [[5,1,5],0.047], [[3,2,6],0.042],
+            [[2,6,3],0.035], [[5,2,4],0.033], [[6,1,4],0.024],
+            [[4,5,2],0.020], [[4,3,4],0.016], [[4,1,6],0.010]
+        ];
+        const defPlays = [
+            [[1,4,5],0.146], [[1,5,4],0.145], [[4,5,1],0.130],
+            [[3,6,1],0.098], [[5,4,1],0.092], [[5,1,4],0.088],
+            [[3,2,5],0.087], [[6,1,3],0.054], [[4,2,4],0.044],
+            [[2,5,3],0.035], [[5,2,3],0.025], [[5,3,2],0.024],
+            [[2,4,4],0.014], [[4,4,2],0.010], [[4,1,5],0.009]
+        ];
+        function nashFormation(role) {
+            const constraint = role === "ATT"
+                ? round.get("att_constraint")
+                : round.get("def_constraint");
+            const budget = role === "ATT" ? 11 : 10;
+            const candidates = (role === "ATT" ? attPlays : defPlays).filter((entry) => {
+                const dice = entry[0];
+                const sum = dice[0] + dice[1] + dice[2];
+                if (sum !== budget && sum !== budget - 3) return false;
+                if (constraint === "ORDER") {
+                    return dice[0] === dice[1] || dice[0] === dice[2] || dice[1] === dice[2];
+                }
+                if (constraint === "ROUT") {
+                    return dice[0] !== dice[1] && dice[0] !== dice[2] && dice[1] !== dice[2];
+                }
+                return true;
+            });
+            if (candidates.length === 0) {
+                return role === "ATT" ? [4,4,3] : [4,3,3];
+            }
+            let total = 0;
+            for (const entry of candidates) total += entry[1];
+            let choice = Math.random() * total;
+            for (const entry of candidates) {
+                choice -= entry[1];
+                if (choice <= 0) return [...entry[0]];
+            }
+            return [...candidates[0][0]];
+        }
+
+        const humanIsAttacker = userId === match.get("attacker_id");
+        if (humanIsAttacker && round.original().get("def_dice") === null) {
+            const botDice = nashFormation("DEF");
+            round.set("def_dice", botDice);
+            round.set("def_dice_initial", [...botDice]);
+        } else if (!humanIsAttacker && round.original().get("att_dice") === null) {
+            const botDice = nashFormation("ATT");
+            round.set("att_dice", botDice);
+            round.set("att_dice_initial", [...botDice]);
+        }
+    }
 
     // ------------------------------------------------------------------------
     // HELPERS DEL MOTOR DE REGLAS

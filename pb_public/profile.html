@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil | Despot</title>
+    <link rel="icon" href="assets/icon/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="pocketbase.umd.js"></script>
+    <script src="profile.js" defer></script>
+</head>
+
+<body>
+    <header class="site-header">
+        <a class="logo-slot" href="/" title="Inicio" aria-label="Inicio">
+            <img src="assets/icon/logo.svg" alt="Despot">
+        </a>
+        <nav class="header-nav">
+            <button id="btn-nav-rules" class="nav-link" data-i18n="rules">Reglas</button>
+            <button id="btn-theme" class="theme-btn" type="button" title="Cambiar tema" aria-label="Cambiar tema"></button>
+            <div class="lang-dropdown">
+                <button id="btn-lang" class="nav-link lang-btn" type="button" aria-expanded="false"
+                    title="Idioma">ES</button>
+                <ul id="lang-menu" class="lang-menu" hidden>
+                    <li><button type="button" data-lang="ES">ES</button></li>
+                    <li><button type="button" data-lang="EN">EN</button></li>
+                    <li><button type="button" data-lang="IT">IT</button></li>
+                </ul>
+            </div>
+            <button id="btn-auth" class="profile-button" type="button" title="Perfil" aria-label="Perfil">
+                <img id="header-avatar" src="assets/profile/prof01.svg" alt="Perfil">
+            </button>
+        </nav>
+    </header>
+
+    <svg class="rinceau-divider" width="100%" height="18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+            <pattern id="gold-rinceau" x="0" y="0" width="64" height="18" patternUnits="userSpaceOnUse">
+                <path d="M 0 9 C 9 9, 10 2.5, 19 2.5 C 25 2.5, 27 6.5, 24 9 C 21.5 11, 18 10, 18.5 7.5
+                         M 16 9 C 25 9, 26 15.5, 35 15.5 C 41 15.5, 43 11.5, 40 9 C 37.5 7, 34 8, 34.5 10.5
+                         M 32 9 C 41 9, 42 2.5, 51 2.5 C 57 2.5, 59 6.5, 56 9 C 53.5 11, 50 10, 50.5 7.5
+                         M 48 9 C 57 9, 58 15.5, 67 15.5
+                         M -16 9 C -7 9, -6 15.5, 3 15.5 C 9 15.5, 11 11.5, 8 9"
+                    fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+                <circle cx="14" cy="4.5" r="0.9" fill="currentColor"/>
+                <circle cx="30" cy="13.5" r="0.9" fill="currentColor"/>
+                <circle cx="46" cy="4.5" r="0.9" fill="currentColor"/>
+                <circle cx="62" cy="13.5" r="0.9" fill="currentColor"/>
+            </pattern>
+        </defs>
+        <line x1="0" y1="0.5" x2="100%" y2="0.5" stroke="currentColor" stroke-opacity="0.22" stroke-width="0.75"/>
+        <rect x="0" y="0" width="100%" height="18" fill="url(#gold-rinceau)"/>
+        <line x1="0" y1="17.5" x2="100%" y2="17.5" stroke="currentColor" stroke-opacity="0.22" stroke-width="0.75"/>
+    </svg>
+
+    <main class="main-stage profile-page">
+        <section class="profile-card" aria-labelledby="profile-title">
+            <h1 id="profile-title" data-i18n="profile">Perfil</h1>
+            <img id="profile-avatar" class="profile-avatar" src="assets/profile/prof01.svg" alt="Avatar">
+            <label class="profile-field">
+                <span data-i18n="username">Nombre de usuario</span>
+                <input id="profile-username-input" type="text" maxlength="32" autocomplete="username">
+            </label>
+            <h2 class="profile-section-title" data-i18n="chooseAvatar">Elige tu imagen</h2>
+            <div id="profile-avatar-grid" class="profile-avatar-grid" aria-label="Elegir imagen de perfil"></div>
+            <div class="profile-actions">
+                <button id="btn-save-profile" class="btn-solid" type="button" data-i18n="save">Guardar</button>
+                <button id="btn-logout" class="btn-outline" type="button" data-i18n="logout">Cerrar sesión</button>
+                <button id="btn-delete-account" class="btn-danger" type="button" data-i18n="deleteAccount">Eliminar cuenta</button>
+            </div>
+            <p id="profile-status" class="profile-status" role="status" aria-live="polite"></p>
+        </section>
+    </main>
+    <div id="delete-account-modal" class="modal hidden" role="dialog" aria-modal="true"
+        aria-labelledby="delete-account-title">
+        <div class="modal-card">
+            <div class="modal-heading">
+                <h2 id="delete-account-title" data-i18n="deleteTitle">Eliminar cuenta</h2>
+                <button id="btn-close-delete-account" class="modal-close" type="button" aria-label="Cerrar">×</button>
+            </div>
+            <p data-i18n="deleteWarning">Esta acción eliminará tu cuenta y no se puede deshacer.</p>
+            <div class="profile-actions">
+                <button id="btn-confirm-delete" class="btn-danger" type="button" data-i18n="confirmDelete">Eliminar</button>
+                <button id="btn-cancel-delete" class="btn-outline" type="button" data-i18n="cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
