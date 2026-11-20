@@ -4,9 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blotto Bizantino</title>
+    <title>Despot</title>
     <link rel="stylesheet" href="styles.css">
     <script src="pocketbase.umd.js"></script>
+    <script src="app.js" defer></script>
 </head>
 
 <body>
@@ -49,6 +50,10 @@
                     <input type="text" id="input-room-code" maxlength="4" placeholder="CÓDIGO" autocomplete="off">
                     <button id="btn-join-match" class="btn-outline">Unirse</button>
                 </div>
+            </div>
+
+            <div class="match-filters">
+                <input type="search" id="match-search" placeholder="Buscar anfitrión">
             </div>
 
             <div class="rinceau-divider subtle" aria-hidden="true">
@@ -171,7 +176,16 @@
             </div>
         </section>
 
-        <!-- VISTA 3: REGLAS -->
+        <!-- VISTA 3: PERFIL -->
+        <section id="view-profile" class="view">
+            <div class="profile-card">
+                <h2>Perfil</h2>
+                <p id="profile-username">Jugador</p>
+                <p id="profile-email" class="muted"></p>
+            </div>
+        </section>
+
+        <!-- VISTA 4: REGLAS -->
         <section id="view-rules" class="view">
             <h2>Reglas de Combate (Bo5)</h2>
             <div class="rules-grid">
@@ -197,3 +211,34 @@
                             menor por <code>1d6</code> aleatorio.</li>
                         <li><strong>Varegos:</strong> Ganar los 3 enfrentamientos (3-0) otorga <strong>2 puntos</strong>
                             de ronda.</li>
+                        <li><strong>Ballesteros:</strong> En rondas posteriores, el primer jugador en fijar reduce el
+                            reloj del rival y permite una pista sobre su formación anterior.</li>
+                    </ul>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <div id="create-match-modal" class="modal hidden" role="dialog" aria-modal="true"
+        aria-labelledby="create-match-title">
+        <div class="modal-card">
+            <div class="modal-heading">
+                <h2 id="create-match-title">Crear partida</h2>
+                <button id="btn-close-create-match" class="modal-close" type="button"
+                    aria-label="Cerrar">×</button>
+            </div>
+            <label class="switch-row">
+                <input id="private-match" type="checkbox">
+                <span>Partida privada</span>
+            </label>
+            <label id="pin-row" class="pin-row hidden">
+                <span>PIN</span>
+                <input id="match-pin" type="password" inputmode="numeric" maxlength="8"
+                    autocomplete="off" placeholder="4-8 dígitos">
+            </label>
+            <button id="btn-start-created-match" class="btn-solid" type="button">Crear sala</button>
+        </div>
+    </div>
+</body>
+
+</html>

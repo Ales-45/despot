@@ -158,20 +158,13 @@ onRecordUpdateRequest((e) => {
             return dice;
         }
 
-        // Autocompletado de izquierda a derecha (vanguardia -> retaguardia) hasta tope 6
-        let rem = deficit;
-        for (let i = 0; i < 3 && rem > 0; i++) {
-            const room = 6 - dice[i];
-            const add = Math.min(room, rem);
-            dice[i] += add;
-            rem -= add;
-        }
+        // Ningún otro déficit está permitido: el jugador pierde la ronda.
         steps.push({
-            type: "AUTOCOMPLETE",
+            type: "UNDER_LIMIT_LOSS",
             side: sideLabel,
-            result: [dice[0], dice[1], dice[2]]
+            deficit: deficit
         });
-        return dice;
+        return null;
     }
 
     function compareSection(attVal, defVal) {
@@ -193,6 +186,26 @@ onRecordUpdateRequest((e) => {
         const steps = [];
         const att = applyTurcopolosOrAutocomplete(rawAtt, 11, round.get("att_constraint"), steps, "ATT");
         const def = applyTurcopolosOrAutocomplete(rawDef, 10, round.get("def_constraint"), steps, "DEF");
+        if (att === null) {
+            steps.push({ type: "UNDER_LIMIT_RESULT", winner: "DEF" });
+            return {
+                finalAttDice: rawAtt,
+                finalDefDice: rawDef,
+                roundWinner: "DEF",
+                pointsAwarded: 1,
+                steps: steps
+            };
+        }
+        if (def === null) {
+            steps.push({ type: "UNDER_LIMIT_RESULT", winner: "ATT" });
+            return {
+                finalAttDice: rawAtt,
+                finalDefDice: rawDef,
+                roundWinner: "ATT",
+                pointsAwarded: 1,
+                steps: steps
+            };
+        }
 
         // Espejo desde perspectiva del Atacante:
         // Vanguardia (att[0] vs def[2]), Centro (att[1] vs def[1]), Retaguardia (att[2] vs def[0])
@@ -213,7 +226,7 @@ onRecordUpdateRequest((e) => {
                 if (checkAlmogavar(aVal, dVal, duel.greekFire)) {
                     almogavarTriggered = true;
                     if (i < 2) {
-                        att[i + 1] += 1;
+                        att[i + 1] = Math.min(7, att[i + 1] + 1);
                     } else {
                         attRearguardAlmogavar = true;
                     }
@@ -223,7 +236,7 @@ onRecordUpdateRequest((e) => {
                 if (checkAlmogavar(dVal, aVal, duel.greekFire)) {
                     almogavarTriggered = true;
                     if (i < 2) {
-                        defMirror[i + 1] += 1;
+                        defMirror[i + 1] = Math.min(7, defMirror[i + 1] + 1);
                     }
                 }
             } else {
@@ -258,7 +271,6 @@ onRecordUpdateRequest((e) => {
         const pointsAwarded = isVaregos ? 2 : 1;
 
         if (isVaregos) {
-Usa el código con precaución.
                 steps.push({ type: "VAREGOS", winner: roundWinner, points: 2 });
         }
         return {
@@ -284,12 +296,14 @@ Usa el código con precaución.
             validateFormation(incoming, 11, round.get("att_constraint"));
             attDice = incoming;
             round.set("att_dice", attDice);
+            round.set("att_dice_initial", [...incoming]);
         } else {
             if (defDice !== null) throw new BadRequestError("Ya fijaste tus dados en esta ronda.");
             const incoming = round.get("def_dice");
             validateFormation(incoming, 10, round.get("def_constraint"));
             defDice = incoming;
             round.set("def_dice", defDice);
+            round.set("def_dice_initial", [...incoming]);
         }
     }
     const bothLocked = attDice !== null && defDice !== null;
@@ -317,8 +331,8 @@ Usa el código con precaución.
                 // Concatenación desde la vanguardia (índice 0) del primer jugador que fijó
                 const currentLockerDice = isAttacker ? attDice : defDice;
                 const prevLockerDice = isAttacker
-                    ? prevRound.get("att_dice_final")
-                    : prevRound.get("def_dice_final");
+                    ? prevRound.get("att_dice_initial")
+                    : prevRound.get("def_dice_initial");
                 const currConcat = Number("" + currentLockerDice[0] + currentLockerDice[1] + currentLockerDice[2]);
                 const prevConcat = Number("" + prevLockerDice[0] + prevLockerDice[1] + prevLockerDice[2]);
                 round.set("ballesteros_hint", currConcat >= prevConcat ? "HIGHER_OR_EQUAL" : "LOWER");
@@ -330,7 +344,40 @@ Usa el código con precaución.
         }
     }
     // CASO 2: Ambos fijaron, o el reloj llegó a 0 (por tiempo natural o por resta de Ballesteros)
-    const outcome = resolveFullRound(attDice, defDice);
+    let outcome;
+    if (isTimeoutCall) {
+        const attTimedOut = attDice === null;
+        const defTimedOut = defDice === null;
+        if (attTimedOut && defTimedOut) {
+            outcome = {
+                finalAttDice: [1, 1, 1],
+                finalDefDice: [1, 1, 1],
+                roundWinner: "DRAW",
+                pointsAwarded: 0,
+                steps: [{ type: "TIMEOUT", winner: "DRAW" }]
+            };
+        } else if (attTimedOut) {
+            outcome = {
+                finalAttDice: [1, 1, 1],
+                finalDefDice: defDice,
+                roundWinner: "DEF",
+                pointsAwarded: 1,
+                steps: [{ type: "TIMEOUT", winner: "DEF", timedOutSide: "ATT" }]
+            };
+        } else if (defTimedOut) {
+            outcome = {
+                finalAttDice: attDice,
+                finalDefDice: [1, 1, 1],
+                roundWinner: "ATT",
+                pointsAwarded: 1,
+                steps: [{ type: "TIMEOUT", winner: "ATT", timedOutSide: "DEF" }]
+            };
+        } else {
+            outcome = resolveFullRound(attDice, defDice);
+        }
+    } else {
+        outcome = resolveFullRound(attDice, defDice);
+    }
     round.set("att_dice", outcome.finalAttDice);
     round.set("def_dice", outcome.finalDefDice);
     round.set("att_dice_final", outcome.finalAttDice);
@@ -342,6 +389,30 @@ Usa el código con precaución.
     // Actualizar marcador global de la partida (Bo5 obligatorio -> meta = 3 puntos)
     const newAttScore = match.get("att_score") + (outcome.roundWinner === "ATT" ? outcome.pointsAwarded : 0);
     const newDefScore = match.get("def_score") + (outcome.roundWinner === "DEF" ? outcome.pointsAwarded : 0);
+    if (outcome.roundWinner === "DRAW") {
+        match.set("att_score", newAttScore);
+        match.set("def_score", newDefScore);
+        $app.save(match);
+
+        const nextRoundNum = roundNum;
+        match.set("current_round", nextRoundNum);
+        $app.save(match);
+
+        const roundsCol = $app.findCollectionByNameOrId("rounds");
+        const repeatedRound = new Record(roundsCol);
+        repeatedRound.set("match_id", match.id);
+        repeatedRound.set("round_number", nextRoundNum);
+        repeatedRound.set("phase", "LOCKING");
+        repeatedRound.set("ends_at", new Date(Date.now() + 20000).toISOString());
+        repeatedRound.set("att_constraint", round.get("att_constraint"));
+        repeatedRound.set("def_constraint", round.get("def_constraint"));
+        repeatedRound.set("att_dice", null);
+        repeatedRound.set("def_dice", null);
+        repeatedRound.set("first_locker", "NONE");
+        repeatedRound.set("ballesteros_hint", "NONE");
+        $app.save(repeatedRound);
+        return;
+    }
     const TARGET_WINS = 3;
     match.set("att_score", newAttScore);
     match.set("def_score", newDefScore);
@@ -349,6 +420,10 @@ Usa el código con precaución.
         // Fin de la partida
         const matchWinnerId = newAttScore >= TARGET_WINS ? match.get("attacker_id") : match.get("defender_id");
         match.set("winner_id", matchWinnerId);
+        match.set("status", "FINISHED");
+        $app.save(match);
+    } else if (roundNum >= 5) {
+        match.set("winner_id", null);
         match.set("status", "FINISHED");
         $app.save(match);
     } else {

@@ -1,5 +1,4 @@
 import numpy as np
-from itertools import permutations
 from scipy.optimize import linprog
 
 def get_valid_plays(budget, mode='free'):
@@ -20,7 +19,7 @@ def get_valid_plays(budget, mode='free'):
 
 def resolve_deterministic(att, def_):
     a = list(att)
-    d = list(def_)
+    d = list(reversed(def_))  # Espejo: a vs d, a vs d, a vs d
     a_wins = 0
     d_wins = 0
     ties = 0
@@ -28,7 +27,6 @@ def resolve_deterministic(att, def_):
     
     for i in range(3):
         av, dv = a[i], d[i]
-        # Combate
         if av == 1 and dv == 6:
             winner = 'A'
         elif dv == 1 and av == 6:
@@ -46,7 +44,6 @@ def resolve_deterministic(att, def_):
         else:
             d_wins += 1
             
-        # Almogavar check
         if not ((av == 6 and dv == 1) or (dv == 6 and av == 1)):
             if av >= 4 and av >= 2 * dv:
                 if i < 2:
@@ -79,7 +76,6 @@ def expand_turco(play, budget):
     return res
 
 def build_expected_outcomes(att_plays, def_plays):
-    # Returns matrix of (prob_A_1pt, prob_A_2pt, prob_D_1pt, prob_D_2pt)
     nA, nD = len(att_plays), len(def_plays)
     M = np.zeros((nA, nD, 4))
     for i, ap in enumerate(att_plays):
@@ -96,40 +92,24 @@ def build_expected_outcomes(att_plays, def_plays):
                     elif w == 'D' and pts == 2: M[i,j,3] += prob
     return M
 
-# Precompute matrices for states:
-# State 0: R1 (free, free)
-# State 1: A won last (win, lose)
-# State 2: D won last (lose, win)
 states = [('free', 'free'), ('win', 'lose'), ('lose', 'win')]
 plays_A = [get_valid_plays(11, s[0]) for s in states]
 plays_D = [get_valid_plays(10, s[1]) for s in states]
 matrices = [build_expected_outcomes(plays_A[k], plays_D[k]) for k in range(3)]
 
 def solve_zero_sum(payoff):
-    # payoff is nA x nD for A. A maximizes, D minimizes.
     nA, nD = payoff.shape
-    # Shift payoff to be strictly positive
     shift = np.min(payoff) - 1.0
     P = payoff - shift
-    # Maximize v s.t. sum(x_i P_ij) >= v, sum(x_i) = 1, x_i >= 0
-    # Minimize sum(y_i) s.t. P^T y >= 1
-    c = np.ones(nA)
-    A_ub = -P.T
-    b_ub = -np.ones(nD)
-    res = linprog(c, A_ub=A_ub, b_ub=b_ub, bounds=(0, None), method='highs')
+    res = linprog(np.ones(nA), A_ub=-P.T, b_ub=-np.ones(nD), bounds=(0, None), method='highs')
     val = 1.0 / res.fun + shift
     strat_A = res.x / res.fun
     
-    # Solve for D: Maximize sum(z_j) s.t. P z <= 1
-    c_d = -np.ones(nD)
-    A_ub_d = P
-    b_ub_d = np.ones(nA)
-    res_d = linprog(c_d, A_ub=A_ub_d, b_ub=b_ub_d, bounds=(0, None), method='highs')
+    res_d = linprog(-np.ones(nD), A_ub=P, b_ub=np.ones(nA), bounds=(0, None), method='highs')
     strat_D = res_d.x / (-res_d.fun)
     return val, strat_A, strat_D
 
-# Dynamic Programming for Bo5 (first to 3)
-# V[scoreA][scoreD][state] = prob A wins Bo5
+# Programación Dinámica Bo5 (Sin pistas de Ballesteros / Empate de tempo)
 V = np.zeros((4, 4, 3))
 for sD in range(3):
     for st in range(3):
@@ -139,75 +119,100 @@ bo5_strats = {}
 for tot in range(4, -1, -1):
     for sA in range(3):
         sD = tot - sA
-        if sD < 0 or sD > 2:
-            continue
+        if sD < 0 or sD > 2: continue
         for st in range(3):
             if tot == 0 and st != 0: continue
             if tot > 0 and st == 0: continue
             M = matrices[st]
-            vA1 = V[min(3, sA+1)][sD][1]
-            vA2 = V[min(3, sA+2)][sD][1]
-            vD1 = V[sA][min(3, sD+1)][2]
-            vD2 = V[sA][min(3, sD+2)][2]
-            payoff = M[:,:,0]*vA1 + M[:,:,1]*vA2 + M[:,:,2]*vD1 + M[:,:,3]*vD2
+            payoff = (M[:,:,0]*V[min(3, sA+1)][sD][1] + 
+                      M[:,:,1]*V[min(3, sA+2)][sD][1] + 
+                      M[:,:,2]*V[sA][min(3, sD+1)][2] + 
+                      M[:,:,3]*V[sA][min(3, sD+2)][2])
             val, s_a, s_d = solve_zero_sum(payoff)
             V[sA][sD][st] = val
             bo5_strats[(sA, sD, st)] = (val, s_a, s_d)
 
-print("Bo5 Win Prob Attacker at (0,0):", V[0][0][0])
-for key in [(0,0,0), (1,0,1), (0,1,2), (2,0,1), (0,2,2), (2,2,1), (2,2,2)]:
-    val, sa, sd = bo5_strats[key]
-    top_a = sorted(zip(plays_A[key[2]], sa), key=lambda x: -x[1])[:3]
-    top_d = sorted(zip(plays_D[key[2]], sd), key=lambda x: -x[1])[:3]
-    print(f"Score {key[:2]} st={key[2]}: P(A)={val:.4f} | TopA={[(p, round(w,3)) for p,w in top_a]} | TopD={[(p, round(w,3)) for p,w in top_d]}")
+def to_num_att_perspective(play, is_defender=False):
+    # Siempre se lee desde la perspectiva atacante (Vanguardia A -> Retaguardia A)
+    p = list(reversed(play)) if is_defender else list(play)
+    return p*100 + p*10 + p
 
-# Analyze rear 1 vs rear 6 (Fuego Griego in rearguard)
-print("\n--- REARGUARD 1 ANALYSIS ---")
-# Check Attacker plays ending in 1 vs Def plays ending in 1 in R1
-r1_val, r1_sa, r1_sd = bo5_strats[(0,0,0)]
-print("R1 Total weight of Attacker ending in 1:", sum(w for p, w in zip(plays_A[0], r1_sa) if p[2] == 1))
-print("R1 Total weight of Defender ending in 1:", sum(w for p, w in zip(plays_D[0], r1_sd) if p[2] == 1))
-print("R1 Total weight of Attacker starting with 1:", sum(w for p, w in zip(plays_A[0], r1_sa) if p[0] == 1))
-print("R1 Total weight of Defender starting with 1:", sum(w for p, w in zip(plays_D[0], r1_sd) if p[0] == 1))
+def solve_ballesteros_lock_first(payoff, plays_first, plays_second, prev_num, first_is_attacker=True):
+    """
+    Calcula el Equilibrio de Nash Bayesiano cuando el Jugador 1 fija primero
+    y el Jugador 2 recibe la pista (>= prev_num o < prev_num).
+    El Jugador 1 debe elegir una distribución óptima sabiendo que su jugada será filtrada por la pista.
+    """
+    ge_idx = [i for i, p in enumerate(plays_first) if to_num_att_perspective(p, not first_is_attacker) >= prev_num]
+    lt_idx = [i for i, p in enumerate(plays_first) if to_num_att_perspective(p, not first_is_attacker) < prev_num]
+    
+    # En un juego de señales donde J1 elige acción y J2 observa la partición (GE o LT),
+    # J2 elige una acción d_ge si ve GE y d_lt si ve LT.
+    # Podemos resolver el juego completo expandiendo las estrategias de J2 a pares (d_ge, d_lt)
+    # o resolviendo directamente por programación lineal sobre las variables de J1:
+    # Maximizar v_ge + v_lt sujeto a:
+    # sum_{i in GE} x_i * P(i, j) >= v_ge  para todo j (si A fija primero)
+    # sum_{i in LT} x_i * P(i, j) >= v_lt  para todo j
+    # sum(x_i) = 1, x_i >= 0
+    n1 = len(plays_first)
+    n2 = len(plays_second)
+    
+    if first_is_attacker:
+        # A maximiza v_ge + v_lt. Variables: [x_0..x_{n1-1}, v_ge, v_lt]
+        # Shift payoff > 0 para evitar problemas de signo con v_ge, v_lt
+        shift = np.min(payoff) - 1.0
+        P = payoff - shift
+        c = np.zeros(n1 + 2)
+        c[n1] = -1.0   # -v_ge
+        c[n1+1] = -1.0 # -v_lt
+        
+        A_ub = []
+        b_ub = []
+        # Restricciones para GE: -sum_{i in GE} x_i P[i,j] + v_ge <= 0
+        for j in range(n2):
+            row = np.zeros(n1 + 2)
+            for i in ge_idx: row[i] = -P[i, j]
+            row[n1] = 1.0
+            A_ub.append(row)
+            b_ub.append(0.0)
+        # Restricciones para LT: -sum_{i in LT} x_i P[i,j] + v_lt <= 0
+        for j in range(n2):
+            row = np.zeros(n1 + 2)
+            for i in lt_idx: row[i] = -P[i, j]
+            row[n1+1] = 1.0
+            A_ub.append(row)
+            b_ub.append(0.0)
+            
+        A_eq = [np.append(np.ones(n1), [0.0, 0.0])]
+        b_eq = [1.0]
+        bounds = [(0, None)]*n1 + [(0, None), (0, None)]
+        
+        res = linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method='highs')
+        ev = (-res.fun) + shift
+        opt_x = res.x[:n1]
+        return ev, opt_x
+    else:
+        # D fija primero (D minimiza payoff de A -> equivale a D maximiza -payoff)
+        neg_payoff = -payoff
+        ev_neg, opt_x = solve_ballesteros_lock_first(neg_payoff, plays_first, plays_second, prev_num, True)
+        return -ev_neg, opt_x
 
-# Analyze Ballesteros information leak
-# Suppose A plays Nash in R1, and in R2 (A won, st=1) A plays Nash.
-# If D gets Ballesteros hint (A_R2 >= A_R1 or A_R2 < A_R1), how much does D's win prob increase if D best-responds to the conditional distribution?
-sa_r1 = bo5_strats[(0,0,0)][1]
-sa_r2 = bo5_strats[(1,0,1)][1]
-pA_r1 = plays_A[0]
-pA_r2 = plays_A[1]
-pD_r2 = plays_D[1]
+print(f"=== EQUILIBRIO DE NASH CORREGIDO (ESPEJO + SIN RELLENO) ===")
+print(f"Probabilidad Victoria Atacante Bo5 (Inicio 0-0): {V[0][0][0]*100:.2f}%")
+print(f"Probabilidad Victoria Defensor Bo5 (Inicio 0-0): {(1 - V[0][0][0])*100:.2f}%\n")
 
-def to_num(p): return p[0]*100 + p[1]*10 + p[2]
-
-# Expected payoff matrix for (1,0,1)
+# Ejemplo de Ballesteros en Ronda 2 tras ganar Atacante (Score 1-0, state 1)
 M1 = matrices[1]
 payoff_101 = M1[:,:,0]*V[2][0][1] + M1[:,:,1]*V[3][0][1] + M1[:,:,2]*V[1][1][2] + M1[:,:,3]*V[1][2][2]
-base_val_101 = bo5_strats[(1,0,1)][0]
+base_val = bo5_strats[(1,0,1)][0]
 
-# Average over all R1 plays of A (weighted by sa_r1)
-ev_with_hint = 0.0
-prob_ge_total = 0.0
-for idx1, p1 in enumerate(pA_r1):
-    w1 = sa_r1[idx1]
-    if w1 < 1e-9: continue
-    n1 = to_num(p1)
-    # Conditional dist of p2 given >= n1 and < n1
-    ge_weights = np.array([sa_r2[i] if to_num(p2) >= n1 else 0.0 for i, p2 in enumerate(pA_r2)])
-    lt_weights = np.array([sa_r2[i] if to_num(p2) < n1 else 0.0 for i, p2 in enumerate(pA_r2)])
-    p_ge = ge_weights.sum()
-    p_lt = lt_weights.sum()
-    prob_ge_total += w1 * p_ge
-    
-    # D minimizes payoff_101
-    if p_ge > 1e-9:
-        best_d_ge = np.min((ge_weights / p_ge) @ payoff_101)
-        ev_with_hint += w1 * p_ge * best_d_ge
-    if p_lt > 1e-9:
-        best_d_lt = np.min((lt_weights / p_lt) @ payoff_101)
-        ev_with_hint += w1 * p_lt * best_d_lt
+print(f"--- ANÁLISIS BALLESTEROS EN RONDA 2 (Marcador 1-0, Atacante en Orden) ---")
+print(f"Valor base si nadie fija primero (sin pista): P(A gana Bo5) = {base_val*100:.2f}%\n")
 
-print(f"\n--- BALLESTEROS ANALYSIS at (1,0) ---")
-print(f"Base P(A wins Bo5) without hint: {base_val_101:.4f}")
-print(f"P(A wins Bo5) if D gets hint & best-responds to Nash: {ev_with_hint:.4f} (D gains {(base_val_101 - ev_with_hint)*100:.2f}% match win prob)")
+for prev_play in [(5,5,1), (4,2,5), (3,6,2), (1,5,5)]:
+    prev_num = to_num_att_perspective(prev_play, is_defender=False)
+    ev_lock, opt_strat = solve_ballesteros_lock_first(payoff_101, plays_A[1], plays_D[1], prev_num, first_is_attacker=True)
+    top_plays = sorted(zip(plays_A[1], opt_strat), key=lambda x: -x[1])[:3]
+    print(f"Si A jugó {prev_play} (ancla={prev_num}) en R1 y fija PRIMERO en R2:")
+    print(f"  -> P(A gana Bo5) baja a {ev_lock*100:.2f}% (Costo de información: {(ev_lock - base_val)*100:.2f}%)")
+    print(f"  -> Mezcla óptima anti-lectura de A: {[(p, round(w, 3)) for p, w in top_plays]}\n")

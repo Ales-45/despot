@@ -1,0 +1,11 @@
+# Scratch and conversation artifacts
+chat.json
+
+# Local PocketBase runtime
+.local/
+pb_data/
+
+# Demo reference files; Nash remains tracked explicitly.
+demo/*
+!demo/
+!demo/nash.py

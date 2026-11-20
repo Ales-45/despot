@@ -3,12 +3,19 @@
 // ============================================================================
 
 const pb = new PocketBase(window.location.origin);
+const savedTheme = localStorage.getItem("despot-theme") || "dark";
+const savedLanguage = localStorage.getItem("despot-language") || "ES";
+document.documentElement.dataset.theme = savedTheme;
+document.documentElement.lang = savedLanguage.toLowerCase();
+const languageButton = document.getElementById("btn-lang");
+languageButton.dataset.language = savedLanguage;
+languageButton.textContent = savedLanguage;
 
 // Estado local mínimo
 const state = {
     match: null,
     round: null,
-    myDice: Array.of(4, 4, 3),
+    myDice: [4, 4, 3],
     timerInterval: null,
     lockedLocally: false
 };
@@ -31,7 +38,8 @@ document.getElementById("btn-nav-rules").addEventListener("click", () => {
 });
 
 document.getElementById("btn-auth").addEventListener("click", () => {
-    showView("view-profile");
+    if (pb.authStore.isValid) showView("view-profile");
+    else loginWithGoogle();
 });
 
 // Tema oscuro por defecto, alternable a claro
@@ -39,43 +47,59 @@ document.getElementById("btn-theme").addEventListener("click", () => {
     const root = document.documentElement;
     const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
     root.setAttribute("data-theme", next);
+    localStorage.setItem("despot-theme", next);
 });
 
-// Placeholder idioma (implementación tardía)
-document.getElementById("btn-lang").addEventListener("click", (e) => {
-    e.target.textContent = e.target.textContent === "ES" ? "EN (Pronto)" : "ES";
+const languages = ["ES", "EN", "IT"];
+document.getElementById("btn-lang").addEventListener("click", (event) => {
+    const current = event.target.dataset.language || "ES";
+    const next = languages[(languages.indexOf(current) + 1) % languages.length];
+    event.target.dataset.language = next;
+    event.target.textContent = next;
+    document.documentElement.lang = next.toLowerCase();
+    localStorage.setItem("despot-language", next);
 });
 
 // ----------------------------------------------------------------------------
-// 2. AUTENTICACIÓN AUTOMÁTICA DE INVITADO (Para jugar sin fricción)
+// 2. AUTENTICACIÓN CON GOOGLE
 // ----------------------------------------------------------------------------
 async function ensureAuth() {
     if (pb.authStore.isValid) {
         updateAuthButton();
         return;
     }
-    const rand = Math.random().toString(36).substring(2, 8);
-    const email = `guest_${rand}@blotto.local`;
-    const password = `guest_${rand}_pass123`;
+    throw new Error("Debes iniciar sesión con Google.");
+}
 
+async function loginWithGoogle() {
     try {
-        await pb.collection("users").create({
-            email,
-            password,
-            passwordConfirm: password,
-            name: `Estratega_${rand.toUpperCase()}`
+        await pb.collection("users").authWithOAuth2({
+            provider: "google",
+            createData: {
+                name: "Jugador",
+                username: `jugador_${Date.now().toString(36)}`
+            }
         });
-        await pb.collection("users").authWithPassword(email, password);
         updateAuthButton();
-    } catch (err) {
-        console.error("Error creando sesión de invitado:", err);
+        showView("view-lobby");
+        loadOpenMatches();
+    } catch (error) {
+        console.error("Google OAuth:", error);
+        alert(error.message || "No se pudo iniciar sesión con Google.");
     }
 }
 
 function updateAuthButton() {
     const btn = document.getElementById("btn-auth");
     if (pb.authStore.isValid && pb.authStore.model) {
-        btn.textContent = pb.authStore.model.name || "Perfil";
+        const username = pb.authStore.model.username || pb.authStore.model.name || "Perfil";
+        btn.textContent = username;
+        document.getElementById("profile-username").textContent = username;
+        document.getElementById("profile-email").textContent = pb.authStore.model.email || "";
+    } else {
+        btn.textContent = "Entrar";
+        document.getElementById("profile-username").textContent = "Jugador";
+        document.getElementById("profile-email").textContent = "";
     }
 }
 
@@ -84,6 +108,10 @@ function updateAuthButton() {
 // ----------------------------------------------------------------------------
 async function loadOpenMatches() {
     const listEl = document.getElementById("matches-list");
+    if (!pb.authStore.isValid) {
+        listEl.innerHTML = '<li class="empty-msg">Inicia sesión con Google para ver partidas.</li>';
+        return;
+    }
     try {
         const res = await pb.collection("matches").getList(1, 15, {
             filter: 'status = "WAITING"',
@@ -98,6 +126,8 @@ async function loadOpenMatches() {
         listEl.innerHTML = "";
         res.items.forEach(m => {
             const li = document.createElement("li");
+            li.dataset.matchRow = "true";
+            li.dataset.search = `${m.room_code || ""} ${m.host_name || ""}`.toLowerCase();
             li.innerHTML = `
                 <span>Sala <strong>${m.room_code}</strong> (Bo5)</span>
                 <button class="btn-outline" data-join-id="${m.id}">Unirse</button>
@@ -110,29 +140,68 @@ async function loadOpenMatches() {
     }
 }
 
-document.getElementById("btn-create-match").addEventListener("click", async () => {
-    await ensureAuth();
-    const code = Math.random().toString(36).substring(2, 6).toUpperCase();
-    const match = await pb.collection("matches").create({
-        room_code: code,
-        player_1: pb.authStore.model.id,
-        status: "WAITING",
-        p1_role_choice: "NONE",
-        p2_role_choice: "NONE",
-        att_score: 0,
-        def_score: 0,
-        current_round: 1
+document.getElementById("match-search").addEventListener("input", (event) => {
+    const query = event.target.value.trim().toLowerCase();
+    document.querySelectorAll("#matches-list li[data-match-row]").forEach((row) => {
+        row.classList.toggle("hidden", !row.dataset.search.includes(query));
     });
-    enterMatch(match.id);
+});
+
+document.getElementById("btn-create-match").addEventListener("click", async () => {
+    try {
+        await ensureAuth();
+        document.getElementById("create-match-modal").classList.remove("hidden");
+    } catch (error) {
+        alert(error.message || "Debes iniciar sesión.");
+    }
+});
+
+document.getElementById("btn-close-create-match").addEventListener("click", () => {
+    document.getElementById("create-match-modal").classList.add("hidden");
+});
+
+document.getElementById("private-match").addEventListener("change", (event) => {
+    document.getElementById("pin-row").classList.toggle("hidden", !event.target.checked);
+});
+
+document.getElementById("btn-start-created-match").addEventListener("click", async () => {
+    try {
+        await ensureAuth();
+        const isPrivate = document.getElementById("private-match").checked;
+        const pin = document.getElementById("match-pin").value.trim();
+        if (isPrivate && !/^\d{4,8}$/.test(pin)) {
+            alert("El PIN debe tener entre 4 y 8 dígitos.");
+            return;
+        }
+        const code = Math.random().toString(36).substring(2, 6).toUpperCase();
+        const match = await pb.collection("matches").create({
+            room_code: code,
+            player_1: pb.authStore.model.id,
+            status: "WAITING",
+            p1_role_choice: "NONE",
+            p2_role_choice: "NONE",
+            att_score: 0,
+            def_score: 0,
+            current_round: 1
+        });
+        document.getElementById("create-match-modal").classList.add("hidden");
+        enterMatch(match.id);
+    } catch (error) {
+        alert(error.message || "No se pudo crear la partida.");
+    }
 });
 
 document.getElementById("btn-join-match").addEventListener("click", async () => {
-    const code = document.getElementById("input-room-code").value.trim().toUpperCase();
-    if (code.length !== 4) return alert("Ingresa un código de 4 letras.");
-    await ensureAuth();
+    try {
+        const code = document.getElementById("input-room-code").value.trim().toUpperCase();
+        if (code.length !== 4) return alert("Ingresa un código de 4 letras.");
+        await ensureAuth();
 
-    const match = await pb.collection("matches").getFirstListItem(`room_code = "${code}" && status = "WAITING"`);
-    await joinMatchById(match.id);
+        const match = await pb.collection("matches").getFirstListItem(`room_code = "${code}" && status = "WAITING"`);
+        await joinMatchById(match.id);
+    } catch (error) {
+        alert(error.message || "No se encontró la partida.");
+    }
 });
 
 async function joinMatchById(matchId) {
@@ -226,15 +295,15 @@ function setupPerspectiveLabels() {
     document.getElementById("points-max").textContent = maxPts;
 
     const myLabels = isAtt
-        ? Array.of("Vanguardia", "Centro", "Retaguardia")
-        : Array.of("Retaguardia", "Centro", "Vanguardia");
+        ? ["Vanguardia", "Centro", "Retaguardia"]
+        : ["Retaguardia", "Centro", "Vanguardia"];
     const oppLabels = isAtt
-        ? Array.of("Retaguardia", "Centro", "Vanguardia")
-        : Array.of("Vanguardia", "Centro", "Retaguardia");
+        ? ["Retaguardia", "Centro", "Vanguardia"]
+        : ["Vanguardia", "Centro", "Retaguardia"];
 
     for (let i = 0; i < 3; i++) {
-        document.getElementById(`my-label-${i}`).textContent = myLabels.at(i);
-        document.getElementById(`opp-label-${i}`).textContent = oppLabels.at(i);
+        document.getElementById(`my-label-${i}`).textContent = myLabels[i];
+        document.getElementById(`opp-label-${i}`).textContent = oppLabels[i];
     }
 }
 
@@ -251,7 +320,7 @@ function handleRoundUpdate(round) {
 
     if (isNewRound) {
         state.lockedLocally = false;
-        state.myDice = isAtt ? Array.of(4, 4, 3) : Array.of(4, 3, 3);
+        state.myDice = isAtt ? [4, 4, 3] : [4, 3, 3];
         document.getElementById("btn-lock-dice").disabled = false;
         document.getElementById("btn-lock-dice").textContent = "Fijar Formación";
         document.getElementById("resolution-feed").innerHTML = "";
@@ -259,7 +328,6 @@ function handleRoundUpdate(round) {
             document.getElementById(`opp-die-${i}`).textContent = "?";
             const c = document.getElementById(`clash-${i}`);
             c.textContent = "-";
-Usa el código con precaución.
                 c.className = "clash-indicator";
         }
     }
@@ -293,7 +361,7 @@ document.querySelectorAll(".step-btn").forEach(btn => {
         const delta = Number(btn.getAttribute("data-delta"));
         const isAtt = state.match.attacker_id === pb.authStore.model.id;
         const maxPts = isAtt ? 11 : 10;
-        const nextVal = state.myDice.at(idx) + delta;
+        const nextVal = state.myDice[idx] + delta;
         if (nextVal < 1 || nextVal > 6) return;
         const currentSum = state.myDice.reduce((acc, val) => acc + val, 0);
         if (currentSum + delta > maxPts) return;
@@ -304,8 +372,8 @@ document.querySelectorAll(".step-btn").forEach(btn => {
 function updateDiceUI() {
     let sum = 0;
     for (let i = 0; i < 3; i++) {
-        const val = state.myDice.at(i);
-        document.getElementById(my - die - ${ i }).textContent = val;
+        const val = state.myDice[i];
+        document.getElementById(`my-die-${i}`).textContent = val;
         sum += val;
     }
     document.getElementById("points-used").textContent = sum;
@@ -340,7 +408,7 @@ function startRoundTimer(round) {
     const endMs = new Date(round.ends_at).getTime();
     state.timerInterval = setInterval(async () => {
         const rem = Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
-        timerEl.textContent = ${ rem } s;
+        timerEl.textContent = `${rem}s`;
         if (rem <= 0) {
             clearInterval(state.timerInterval);
             try {
@@ -354,9 +422,9 @@ function animateRoundResolution(round, isAtt) {
     // Si eres Defensor, invertimos visualmente el orden para que tu frente coincida en espejo con el tablero
     const myFinal = isAtt
         ? round.att_dice
-        : Array.of(round.def_dice.at(2), round.def_dice.at(1), round.def_dice.at(0));
+        : [round.def_dice[2], round.def_dice[1], round.def_dice[0]];
     const oppFinal = isAtt
-        ? Array.of(round.def_dice.at(2), round.def_dice.at(1), round.def_dice.at(0))
+        ? [round.def_dice[2], round.def_dice[1], round.def_dice[0]]
         : round.att_dice;
     const feed = document.getElementById("resolution-feed");
     feed.innerHTML = "";
@@ -364,25 +432,26 @@ function animateRoundResolution(round, isAtt) {
         // El combate siempre se resuelve de izquierda a derecha del Atacante (sección 0 -> 1 -> 2)
         const visualSlot = isAtt ? i : 2 - i;
         setTimeout(() => {
-            document.getElementById(my - die - ${ visualSlot }).textContent = myFinal.at(visualSlot);
-            document.getElementById(opp - die - ${ visualSlot }).textContent = oppFinal.at(visualSlot);
+            document.getElementById(`my-die-${visualSlot}`).textContent = myFinal[visualSlot];
+            document.getElementById(`opp-die-${visualSlot}`).textContent = oppFinal[visualSlot];
             const clashStep = (round.resolution_log || []).find(s => s.type === "CLASH" && s.section === i);
             if (clashStep) {
-                const el = document.getElementById(clash - ${ visualSlot });
+                const el = document.getElementById(`clash-${visualSlot}`);
                 const iWonSection = (isAtt && clashStep.winner === "ATT") || (!isAtt && clashStep.winner === "DEF");
                 el.textContent = iWonSection ? "VICTORIA" : "DERROTA";
-                el.className = clash - indicator ${ iWonSection ? "win" : "loss" };
-                if (clashStep.greekFire) feed.innerHTML += <div>Fuego Griego activado en sección ${i + 1}.</div>;
-                if (clashStep.almogavar) feed.innerHTML += <div>Almogávar (+1) encadenado desde sección ${i + 1}.</div>;
+                el.className = `clash-indicator ${iWonSection ? "win" : "loss"}`;
+                if (clashStep.greekFire) feed.innerHTML += `<div>Fuego Griego activado en sección ${i + 1}.</div>`;
+                if (clashStep.almogavar) feed.innerHTML += `<div>Almogávar (+1) encadenado desde sección ${i + 1}.</div>`;
             }
         }, i * 650);
     }
     setTimeout(() => {
         const varegos = (round.resolution_log || []).find(s => s.type === "VAREGOS");
         if (varegos) {
-            feed.innerHTML += <div><strong>¡Varegos! Victoria 3-0 otorga 2 puntos de ronda.</strong></div>;
+            feed.innerHTML += "<div><strong>¡Varegos! Victoria 3-0 otorga 2 puntos de ronda.</strong></div>";
         }
     }, 2100);
 }
 // Arranque inicial
-ensureAuth().then(loadOpenMatches);
+updateAuthButton();
+loadOpenMatches();
