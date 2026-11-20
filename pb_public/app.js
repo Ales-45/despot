@@ -51,13 +51,27 @@ document.getElementById("btn-theme").addEventListener("click", () => {
 });
 
 const languages = ["ES", "EN", "IT"];
-document.getElementById("btn-lang").addEventListener("click", (event) => {
-    const current = event.target.dataset.language || "ES";
-    const next = languages[(languages.indexOf(current) + 1) % languages.length];
-    event.target.dataset.language = next;
-    event.target.textContent = next;
+const languageMenu = document.getElementById("lang-menu");
+languageButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const isOpen = !languageMenu.hidden;
+    languageMenu.hidden = isOpen;
+    languageButton.setAttribute("aria-expanded", String(!isOpen));
+});
+languageMenu.addEventListener("click", (event) => {
+    const option = event.target.closest("button[data-lang]");
+    if (!option) return;
+    const next = option.dataset.lang;
+    languageButton.dataset.language = next;
+    languageButton.textContent = next;
     document.documentElement.lang = next.toLowerCase();
     localStorage.setItem("despot-language", next);
+    languageMenu.hidden = true;
+    languageButton.setAttribute("aria-expanded", "false");
+});
+document.addEventListener("click", () => {
+    languageMenu.hidden = true;
+    languageButton.setAttribute("aria-expanded", "false");
 });
 
 // ----------------------------------------------------------------------------
@@ -93,14 +107,35 @@ function updateAuthButton() {
     const btn = document.getElementById("btn-auth");
     if (pb.authStore.isValid && pb.authStore.model) {
         const username = pb.authStore.model.username || pb.authStore.model.name || "Perfil";
-        btn.textContent = username;
+        const selectedAvatar = localStorage.getItem("despot-avatar") || "assets/profile/prof01.svg";
+        btn.innerHTML = `<img src="${selectedAvatar}" alt="${username}">`;
+        btn.setAttribute("aria-label", username);
         document.getElementById("profile-username").textContent = username;
         document.getElementById("profile-email").textContent = pb.authStore.model.email || "";
+        document.getElementById("profile-avatar").src = selectedAvatar;
     } else {
         btn.textContent = "Entrar";
         document.getElementById("profile-username").textContent = "Jugador";
         document.getElementById("profile-email").textContent = "";
     }
+}
+
+const profileAvatarGrid = document.getElementById("profile-avatar-grid");
+for (let index = 1; index <= 19; index += 1) {
+    const number = String(index).padStart(2, "0");
+    const source = `assets/profile/prof${number}.svg`;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "profile-avatar-option";
+    button.innerHTML = `<img src="${source}" alt="Perfil ${index}">`;
+    button.addEventListener("click", () => {
+        localStorage.setItem("despot-avatar", source);
+        document.querySelectorAll(".profile-avatar-option").forEach((item) => item.classList.remove("is-active"));
+        button.classList.add("is-active");
+        document.getElementById("profile-avatar").src = source;
+        updateAuthButton();
+    });
+    profileAvatarGrid.append(button);
 }
 
 // ----------------------------------------------------------------------------
@@ -325,7 +360,7 @@ function handleRoundUpdate(round) {
         document.getElementById("btn-lock-dice").textContent = "Fijar Formación";
         document.getElementById("resolution-feed").innerHTML = "";
         for (let i = 0; i < 3; i++) {
-            document.getElementById(`opp-die-${i}`).textContent = "?";
+            document.getElementById(`opp-die-${i}`).src = "assets/r_dice/r1.svg";
             const c = document.getElementById(`clash-${i}`);
             c.textContent = "-";
                 c.className = "clash-indicator";
@@ -371,9 +406,11 @@ document.querySelectorAll(".step-btn").forEach(btn => {
 });
 function updateDiceUI() {
     let sum = 0;
+    const isAtt = state.match?.attacker_id === pb.authStore.model?.id;
+    const prefix = isAtt ? "r_dice/r" : "b_dice/b";
     for (let i = 0; i < 3; i++) {
         const val = state.myDice[i];
-        document.getElementById(`my-die-${i}`).textContent = val;
+        document.getElementById(`my-die-${i}`).src = `assets/${prefix}${val}.svg`;
         sum += val;
     }
     document.getElementById("points-used").textContent = sum;
@@ -432,8 +469,10 @@ function animateRoundResolution(round, isAtt) {
         // El combate siempre se resuelve de izquierda a derecha del Atacante (sección 0 -> 1 -> 2)
         const visualSlot = isAtt ? i : 2 - i;
         setTimeout(() => {
-            document.getElementById(`my-die-${visualSlot}`).textContent = myFinal[visualSlot];
-            document.getElementById(`opp-die-${visualSlot}`).textContent = oppFinal[visualSlot];
+                document.getElementById(`my-die-${visualSlot}`).src =
+                    `assets/${isAtt ? "r_dice/r" : "b_dice/b"}${myFinal[visualSlot]}.svg`;
+            document.getElementById(`opp-die-${visualSlot}`).src =
+                `assets/${isAtt ? "b_dice/b" : "r_dice/r"}${oppFinal[visualSlot]}.svg`;
             const clashStep = (round.resolution_log || []).find(s => s.type === "CLASH" && s.section === i);
             if (clashStep) {
                 const el = document.getElementById(`clash-${visualSlot}`);

@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Despot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="pocketbase.umd.js"></script>
     <script src="app.js" defer></script>
@@ -15,29 +18,45 @@
     <!-- HEADER MINIMALISTA -->
     <header class="site-header">
         <button id="btn-home" class="logo-slot" title="Inicio" aria-label="Inicio">
-            <span class="logo-placeholder">[ LOGO ]</span>
+            <img src="assets/icon/logo.svg" alt="Despot">
         </button>
 
         <nav class="header-nav">
             <button id="btn-nav-rules" class="nav-link">Reglas</button>
-            <button id="btn-theme" class="nav-btn" title="Cambiar tema">Tema</button>
-            <button id="btn-lang" class="nav-btn" title="Idioma (Próximamente)">ES</button>
-            <button id="btn-auth" class="nav-btn nav-primary">Entrar</button>
+            <button id="btn-theme" class="theme-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
+            <div class="lang-dropdown">
+                <button id="btn-lang" class="nav-link lang-btn" type="button" aria-expanded="false"
+                    title="Idioma">ES</button>
+                <ul id="lang-menu" class="lang-menu" hidden>
+                    <li><button type="button" data-lang="ES">ES</button></li>
+                    <li><button type="button" data-lang="EN">EN</button></li>
+                    <li><button type="button" data-lang="IT">IT</button></li>
+                </ul>
+            </div>
+            <button id="btn-auth" class="profile-button" type="button" title="Perfil">Entrar</button>
         </nav>
     </header>
 
     <!-- DIVISOR ORNAMENTAL RINCEAU (SVG puro, sin assets externos) -->
-    <div class="rinceau-divider" aria-hidden="true">
-        <svg viewBox="0 0 600 24" preserveAspectRatio="none">
-            <path d="M0,12 Q75,2 150,12 T300,12 T450,12 T600,12" fill="none" stroke="currentColor" stroke-width="1.2" />
-            <path d="M135,12 C135,5 148,5 148,12 C148,17 140,17 140,13" fill="none" stroke="currentColor"
-                stroke-width="1" />
-            <path d="M285,12 C285,5 298,5 298,12 C298,17 290,17 290,13" fill="none" stroke="currentColor"
-                stroke-width="1" />
-            <path d="M435,12 C435,5 448,5 448,12 C448,17 440,17 440,13" fill="none" stroke="currentColor"
-                stroke-width="1" />
-        </svg>
-    </div>
+    <svg class="rinceau-divider" width="100%" height="18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+            <pattern id="gold-rinceau" x="0" y="0" width="64" height="18" patternUnits="userSpaceOnUse">
+                <path d="M 0 9 C 9 9, 10 2.5, 19 2.5 C 25 2.5, 27 6.5, 24 9 C 21.5 11, 18 10, 18.5 7.5
+                         M 16 9 C 25 9, 26 15.5, 35 15.5 C 41 15.5, 43 11.5, 40 9 C 37.5 7, 34 8, 34.5 10.5
+                         M 32 9 C 41 9, 42 2.5, 51 2.5 C 57 2.5, 59 6.5, 56 9 C 53.5 11, 50 10, 50.5 7.5
+                         M 48 9 C 57 9, 58 15.5, 67 15.5
+                         M -16 9 C -7 9, -6 15.5, 3 15.5 C 9 15.5, 11 11.5, 8 9"
+                    fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+                <circle cx="14" cy="4.5" r="0.9" fill="currentColor"/>
+                <circle cx="30" cy="13.5" r="0.9" fill="currentColor"/>
+                <circle cx="46" cy="4.5" r="0.9" fill="currentColor"/>
+                <circle cx="62" cy="13.5" r="0.9" fill="currentColor"/>
+            </pattern>
+        </defs>
+        <line x1="0" y1="0.5" x2="100%" y2="0.5" stroke="currentColor" stroke-opacity="0.22" stroke-width="0.75"/>
+        <rect x="0" y="0" width="100%" height="18" fill="url(#gold-rinceau)"/>
+        <line x1="0" y1="17.5" x2="100%" y2="17.5" stroke="currentColor" stroke-opacity="0.22" stroke-width="0.75"/>
+    </svg>
 
     <!-- CONTENIDO PRINCIPAL DINÁMICO -->
     <main class="main-stage">
@@ -115,15 +134,15 @@
                 <div class="army-row opponent-row">
                     <div class="section-slot">
                         <span class="slot-label" id="opp-label-0">Retaguardia</span>
-                        <div class="die-box opp-die" id="opp-die-0">?</div>
+                        <img class="die-box opp-die" id="opp-die-0" src="assets/r_dice/r1.svg" alt="Opposing die">
                     </div>
                     <div class="section-slot">
                         <span class="slot-label" id="opp-label-1">Centro</span>
-                        <div class="die-box opp-die" id="opp-die-1">?</div>
+                        <img class="die-box opp-die" id="opp-die-1" src="assets/r_dice/r1.svg" alt="Opposing die">
                     </div>
                     <div class="section-slot">
                         <span class="slot-label" id="opp-label-2">Vanguardia</span>
-                        <div class="die-box opp-die" id="opp-die-2">?</div>
+                        <img class="die-box opp-die" id="opp-die-2" src="assets/r_dice/r1.svg" alt="Opposing die">
                     </div>
                 </div>
 
@@ -138,25 +157,25 @@
                 <div class="army-row player-row">
                     <div class="section-slot">
                         <div class="die-control">
-                            <button class="step-btn" data-idx="0" data-delta="1">+</button>
-                            <div class="die-box player-die" id="my-die-0">4</div>
-                            <button class="step-btn" data-idx="0" data-delta="-1">-</button>
+                            <button class="step-btn" data-idx="0" data-delta="1" aria-label="Aumentar dado"><img src="assets/icon/balestra_up.svg" alt=""></button>
+                            <img class="die-box player-die" id="my-die-0" src="assets/b_dice/b4.svg" alt="Player die">
+                            <button class="step-btn" data-idx="0" data-delta="-1" aria-label="Reducir dado"><img src="assets/icon/balestra_down.svg" alt=""></button>
                         </div>
                         <span class="slot-label" id="my-label-0">Vanguardia</span>
                     </div>
                     <div class="section-slot">
                         <div class="die-control">
-                            <button class="step-btn" data-idx="1" data-delta="1">+</button>
-                            <div class="die-box player-die" id="my-die-1">4</div>
-                            <button class="step-btn" data-idx="1" data-delta="-1">-</button>
+                            <button class="step-btn" data-idx="1" data-delta="1" aria-label="Aumentar dado"><img src="assets/icon/balestra_up.svg" alt=""></button>
+                            <img class="die-box player-die" id="my-die-1" src="assets/b_dice/b4.svg" alt="Player die">
+                            <button class="step-btn" data-idx="1" data-delta="-1" aria-label="Reducir dado"><img src="assets/icon/balestra_down.svg" alt=""></button>
                         </div>
                         <span class="slot-label" id="my-label-1">Centro</span>
                     </div>
                     <div class="section-slot">
                         <div class="die-control">
-                            <button class="step-btn" data-idx="2" data-delta="1">+</button>
-                            <div class="die-box player-die" id="my-die-2">3</div>
-                            <button class="step-btn" data-idx="2" data-delta="-1">-</button>
+                            <button class="step-btn" data-idx="2" data-delta="1" aria-label="Aumentar dado"><img src="assets/icon/balestra_up.svg" alt=""></button>
+                            <img class="die-box player-die" id="my-die-2" src="assets/b_dice/b3.svg" alt="Player die">
+                            <button class="step-btn" data-idx="2" data-delta="-1" aria-label="Reducir dado"><img src="assets/icon/balestra_down.svg" alt=""></button>
                         </div>
                         <span class="slot-label" id="my-label-2">Retaguardia</span>
                     </div>
@@ -179,9 +198,10 @@
         <!-- VISTA 3: PERFIL -->
         <section id="view-profile" class="view">
             <div class="profile-card">
-                <h2>Perfil</h2>
-                <p id="profile-username">Jugador</p>
+                <img id="profile-avatar" class="profile-avatar" src="assets/profile/prof01.svg" alt="Avatar">
+                <h2 id="profile-username">Jugador</h2>
                 <p id="profile-email" class="muted"></p>
+                <div id="profile-avatar-grid" class="profile-avatar-grid" aria-label="Elegir imagen de perfil"></div>
             </div>
         </section>
 
