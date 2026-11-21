@@ -23,6 +23,14 @@
     --loss: #a63a37;
 }
 
+@font-face {
+    font-family: "IM Fell DW Pica";
+    src: url("assets/fonts/IMFellDWPica-Regular.ttf") format("truetype");
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -352,10 +360,6 @@ textarea {
     background: #000;
 }
 
-.rules-italic {
-    font-style: italic;
-}
-
 .wildcard-carousel {
     display: grid;
     grid-template-columns: 44px 1fr 44px;
@@ -424,6 +428,35 @@ textarea {
 .btn-outline:hover {
     border-color: var(--accent);
     color: var(--accent);
+}
+
+.icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+}
+
+.icon-button img,
+.section-icon {
+    width: 1.15rem;
+    height: 1.15rem;
+    vertical-align: middle;
+    mix-blend-mode: screen;
+}
+
+.section-icon { margin-right: 0.4rem; }
+
+:root[data-theme="light"] .icon-button img,
+:root[data-theme="light"] .section-icon,
+:root[data-theme="dark"] .icon-button.btn-solid img {
+    filter: invert(1);
+    mix-blend-mode: multiply;
+}
+
+:root[data-theme="light"] .icon-button.btn-solid img {
+    filter: none;
+    mix-blend-mode: screen;
 }
 
 /* ============================================================================

@@ -18,3 +18,4 @@
 - Reloj
 - UX animada
 - Elo
+- Filtro de nombres

@@ -1,4 +1,5 @@
 const engine = require(`${__hooks}/../pb_public/game-engine.js`);
+const ROUND_DURATION_MS = 30000;
 
 function findOne(app, collection, filter, params) {
     const records = app.findRecordsByFilter(collection, filter, "", 1, 0, params);
@@ -13,7 +14,7 @@ function newRound(app, match, number, attConstraint, defConstraint) {
     round.set("round_number", number);
     round.set("phase", "LOCKING");
     round.set("starts_at", new Date(startsAt).toISOString());
-    round.set("ends_at", new Date(startsAt + 20000).toISOString());
+    round.set("ends_at", new Date(startsAt + ROUND_DURATION_MS).toISOString());
     round.set("att_constraint", attConstraint);
     round.set("def_constraint", defConstraint);
     round.set("first_locker", "NONE");
@@ -26,14 +27,17 @@ function newRound(app, match, number, attConstraint, defConstraint) {
     return round;
 }
 
-function archiveRound(app, match, round) {
+function archiveRound(app, match, round, allowMissingParticipants = false) {
     const winner = round.getString("round_winner");
     const attacker = match.getString("attacker_id");
     const defender = match.getString("defender_id");
-    if ((winner !== "ATT" && winner !== "DEF") || !attacker || !defender || attacker === defender) {
+    if ((winner !== "ATT" && winner !== "DEF") ||
+        (!allowMissingParticipants && (!attacker || !defender)) ||
+        (attacker && attacker === defender)) {
         throw new Error("Cannot archive a round without a result and valid participants.");
     }
     for (const [user, side] of [[attacker, "ATT"], [defender, "DEF"]]) {
+        if (!user) continue;
         const found = app.findRecordsByFilter("round_history",
             "match_key = {:match} && round_number = {:round} && user = {:user}", "", 1, 0,
             { match: match.id, round: round.getInt("round_number"), user });
@@ -49,6 +53,22 @@ function archiveRound(app, match, round) {
     }
 }
 
+function removeMatch(app, match, allowMissingParticipants = false) {
+    const rounds = app.findRecordsByFilter("rounds", "match_id = {:id}", "", 0, 0, { id: match.id });
+    for (const round of rounds) {
+        if (round.getString("phase") === "REVEALED") archiveRound(app, match, round, allowMissingParticipants);
+    }
+    for (const round of rounds) app.delete(round);
+    app.delete(match);
+}
+
+function removeUserMatches(app, userId) {
+    const matches = app.findRecordsByFilter("matches",
+        "player_1 = {:user} || player_2 = {:user} || attacker_id = {:user} || defender_id = {:user} || winner_id = {:user}",
+        "", 0, 0, { user: userId });
+    for (const match of matches) removeMatch(app, match, true);
+}
+
 function cleanupMatches(app) {
     const matches = app.findRecordsByFilter("matches", "status != 'WAITING'", "", 0, 0);
     for (const candidate of matches) {
@@ -57,6 +77,11 @@ function cleanupMatches(app) {
                 const match = tx.findRecordById("matches", candidate.id);
                 const status = match.getString("status");
                 if (status === "WAITING") return;
+                const incomplete = !match.getString("player_1") || !match.getString("player_2");
+                if (incomplete) {
+                    removeMatch(tx, match, true);
+                    return;
+                }
                 const field = status === "FINISHED" ? "finished_at" : "last_activity";
                 const last = match.getString(field);
                 if (!last) {
@@ -65,12 +90,7 @@ function cleanupMatches(app) {
                     return;
                 }
                 if (Date.now() - new Date(last).getTime() < 5 * 60 * 1000) return;
-                const rounds = tx.findRecordsByFilter("rounds", "match_id = {:id}", "", 0, 0, { id: match.id });
-                for (const round of rounds) {
-                    if (round.getString("phase") === "REVEALED") archiveRound(tx, match, round);
-                }
-                for (const round of rounds) tx.delete(round);
-                tx.delete(match);
+                removeMatch(tx, match);
             });
         } catch (error) {
             console.error("Could not remove match " + candidate.id + ": " + error);
@@ -95,7 +115,7 @@ function finishRound(app, match, round, lock) {
         round.set("attempt", round.getInt("attempt") + 1);
         round.set("first_locker", "NONE");
         round.set("ballesteros_hint", "NONE");
-        round.set("ends_at", new Date(Date.now() + 20000).toISOString());
+        round.set("ends_at", new Date(Date.now() + ROUND_DURATION_MS).toISOString());
         app.save(lock);
         app.save(round);
         return;
@@ -354,4 +374,4 @@ function handle(e) {
     return e.json(responseStatus, result);
 }
 
-module.exports = { handle, cleanupMatches };
+module.exports = { handle, cleanupMatches, removeUserMatches };

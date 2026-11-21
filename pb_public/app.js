@@ -3,6 +3,8 @@
 // ============================================================================
 
 const pb = new PocketBase(window.location.origin);
+const ROUND_DURATION_MS = 30000;
+const BALLESTEROS_PENALTY_MS = 10000;
 const savedTheme = pb.authStore.model?.theme || localStorage.getItem("despot-theme") || "dark";
 const savedLanguage = pb.authStore.model?.language || localStorage.getItem("despot-language") || "ES";
 document.documentElement.dataset.theme = savedTheme;
@@ -55,7 +57,7 @@ const translations = {
         loginRooms: "Inicia sesión con Google para ver partidas.", noRooms: "No hay rivales",
         invalidPin: "El PIN debe tener entre 4 y 8 dígitos.", wrongPin: "PIN incorrecto.", tooManyPins: "Demasiados intentos. Espera un minuto.",
         invalidCode: "Ingresa un código de 4 letras o números.", matchError: "No se pudo completar la acción.",
-        roomClosed: "La sala se cerró.", victory: "Victoria", defeat: "Derrota",
+        roomClosed: "La sala se cerró.", matchCanceled: "La partida fue cancelada.", victory: "Victoria", defeat: "Derrota",
         privateRoom: "Partida privada", join: "Unirse", loginRequired: "Debes iniciar sesión con Google.",
         roundWon: "Gana", roundLost: "Pérdida", matchResults: "Resultados de las rondas: atacante contra defensor",
         unrated: "Sin Elo: ya jugaron hoy (UTC).",
@@ -89,7 +91,7 @@ const translations = {
         loginRooms: "Sign in with Google to view matches.", noRooms: "No rivals here",
         invalidPin: "The PIN must have 4 to 8 digits.", wrongPin: "Incorrect PIN.", tooManyPins: "Too many attempts. Wait one minute.",
         invalidCode: "Enter a 4-character code.", matchError: "The action could not be completed.",
-        roomClosed: "The room was closed.", victory: "Victory", defeat: "Defeat",
+        roomClosed: "The room was closed.", matchCanceled: "The match was canceled.", victory: "Victory", defeat: "Defeat",
         privateRoom: "Private match", join: "Join", loginRequired: "Sign in with Google.",
         roundWon: "Win", roundLost: "Loss", matchResults: "Round results: attacker versus defender",
         unrated: "Unrated: already played today (UTC).",
@@ -123,7 +125,7 @@ const translations = {
         loginRooms: "Accedi con Google per vedere le partite.", noRooms: "Nessun rivale",
         invalidPin: "Il PIN deve avere da 4 a 8 cifre.", wrongPin: "PIN errato.", tooManyPins: "Troppi tentativi. Attendi un minuto.",
         invalidCode: "Inserisci un codice di 4 caratteri.", matchError: "Impossibile completare l'azione.",
-        roomClosed: "La stanza è stata chiusa.", victory: "Vittoria", defeat: "Sconfitta",
+        roomClosed: "La stanza è stata chiusa.", matchCanceled: "La partita è stata annullata.", victory: "Vittoria", defeat: "Sconfitta",
         privateRoom: "Partita privata", join: "Unisciti", loginRequired: "Accedi con Google.",
         roundWon: "Vinta", roundLost: "Persa", matchResults: "Risultati dei turni: attaccante contro difensore",
         unrated: "Senza Elo: avete già giocato oggi (UTC).",
@@ -480,7 +482,7 @@ function startBotMatch() {
     state.round = {
         round_number: 1,
         phase: "LOCKING",
-        ends_at: new Date(Date.now() + 20000).toISOString(),
+        ends_at: new Date(Date.now() + ROUND_DURATION_MS).toISOString(),
         att_constraint: "FREE",
         def_constraint: "FREE",
         first_locker: "NONE",
@@ -575,13 +577,16 @@ function handleMatchClosed(matchId) {
     if (state.match?.id !== matchId) return;
     localStorage.removeItem(currentMatchKey());
     if (state.match.status === "FINISHED") return;
+    const message = state.match.status === "WAITING" ? "roomClosed" : "matchCanceled";
     state.match = null;
+    state.round = null;
+    state.roundSync++;
     clearInterval(state.timerInterval);
     clearTimeout(state.roundAdvanceTimeout);
     state.roundAdvanceTimeout = null;
     showView("view-lobby");
     loadOpenMatches();
-    showToast("roomClosed", "200", "success");
+    showToast(message, "200", "success");
 }
 
 // ----------------------------------------------------------------------------
@@ -682,7 +687,7 @@ function handleBotRoundUpdate() {
     document.getElementById("btn-lock-dice").disabled = false;
     updateRoundLabels(state.round);
     if (state.botRound >= 2) {
-        state.round.ends_at = new Date(Date.now() + 10000).toISOString();
+        state.round.ends_at = new Date(Date.now() + ROUND_DURATION_MS - BALLESTEROS_PENALTY_MS).toISOString();
         const banner = document.getElementById("ballesteros-banner");
         const currentConcat = Number(state.botDice.join(""));
         const previousConcat = state.botPreviousBotConcat;
@@ -759,7 +764,7 @@ function resolveBotRound(timedOut = false) {
         state.match.current_round = state.botRound;
         state.round.round_number = state.botRound;
         document.getElementById("hud-round-label").textContent = `${t("round")} ${state.botRound}`;
-        state.round.ends_at = new Date(Date.now() + 20000).toISOString();
+        state.round.ends_at = new Date(Date.now() + ROUND_DURATION_MS).toISOString();
         handleBotRoundUpdate();
     }, 10000);
 }
@@ -830,7 +835,7 @@ document.querySelectorAll("#stage-roles button").forEach(btn => {
             state.match.defender_id = choice === "DEF" ? playerId : "BOT";
             state.match.status = "PLAYING";
             state.round.phase = "LOCKING";
-            state.round.ends_at = new Date(Date.now() + 20000).toISOString();
+            state.round.ends_at = new Date(Date.now() + ROUND_DURATION_MS).toISOString();
             state.myDice = startingDice(choice === "ATT", "FREE");
             state.botDice = chooseBotDice("FREE", choice === "ATT" ? 10 : 11);
             renderMatchState();
@@ -853,7 +858,7 @@ function setupPerspectiveLabels() {
 }
 
 // ----------------------------------------------------------------------------
-// 5. LÓGICA DE RONDA, DADOS, RELOJ DE 20s Y BALLESTEROS
+// 5. LÓGICA DE RONDA, DADOS, RELOJ Y BALLESTEROS
 // ----------------------------------------------------------------------------
 function handleRoundUpdate(round) {
     const isNewRound = !state.round || state.round.id !== round.id || state.round.attempt !== round.attempt;
@@ -908,9 +913,8 @@ document.querySelectorAll(".step-btn").forEach(btn => {
         const isAtt = state.match.attacker_id === humanId();
         const maxPts = isAtt ? 11 : 10;
         const current = state.myDice[idx];
-        // Subir desde 6 vuelve a 1 para evitar cinco clics hacia abajo
-        const nextVal = delta > 0 && current === 6 ? 1 : current + delta;
-        if (nextVal < 1 || nextVal > 6) return;
+        const nextVal = delta > 0 && current === 6 ? 1
+            : delta < 0 && current === 1 ? 6 : current + delta;
         const currentSum = state.myDice.reduce((acc, val) => acc + val, 0);
         if (currentSum + nextVal - current > maxPts) return;
         state.myDice[idx] = nextVal;
@@ -1008,7 +1012,7 @@ function resetResolution() {
     updateDiceAccessibility();
     document.getElementById("stage-combat").classList.remove("round-revealed");
     const timer = document.getElementById("hud-timer");
-    timer.textContent = "20s";
+    timer.textContent = `${ROUND_DURATION_MS / 1000}s`;
     timer.setAttribute("aria-live", "off");
     timer.classList.remove("match-result");
     document.getElementById("btn-return-home").classList.add("hidden");
@@ -1156,7 +1160,8 @@ if (pb.authStore.isValid && pb.authStore.model) {
     if (savedMatch) {
         enterMatch(savedMatch).catch(error => {
             localStorage.removeItem(currentMatchKey());
-            showGameError(error);
+            if (error.status === 404) showToast("matchCanceled", "200", "success");
+            else showGameError(error);
         });
     }
 }

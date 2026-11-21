@@ -5,6 +5,10 @@ chat.json
 .local/
 pb_data/
 
+# Local documentation and tests
+/document.md
+/tests/
+
 # Demo reference files; Nash remains tracked explicitly.
 demo/*
 !demo/

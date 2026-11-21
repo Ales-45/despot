@@ -6,14 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Despot</title>
     <link rel="icon" href="assets/icon/favicon.svg" type="image/svg+xml">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=10">
+    <link rel="stylesheet" href="styles.css?v=13">
     <script src="pocketbase.umd.js"></script>
     <script src="auth.js?v=9" defer></script>
     <script src="game-engine.js" defer></script>
-    <script src="app.js?v=12" defer></script>
+    <script src="app.js?v=15" defer></script>
 </head>
 
 <body>
@@ -74,7 +71,7 @@
         <!-- VISTA 1: HOME / LISTADO DE PARTIDAS -->
         <section id="view-lobby" class="view active">
             <div class="lobby-actions">
-                <button id="btn-create-match" class="btn-solid" data-i18n="createMatch">Crear partida</button>
+                <button id="btn-create-match" class="btn-solid icon-button"><img src="assets/icon/lobby.svg" alt=""><span data-i18n="createMatch">Crear partida</span></button>
                 <button id="btn-play-bot" class="btn-outline" type="button" data-i18n="playBot">Jugar contra la máquina</button>
                 <div class="join-box">
                     <input type="text" id="input-room-code" maxlength="4" placeholder="CÓDIGO" data-i18n-placeholder="code" aria-label="Código de sala" data-i18n-aria="roomCode" autocomplete="off">
@@ -111,7 +108,7 @@
                 <div class="round-center">
                     <span id="hud-room-code" class="room-tag">----</span>
                     <span id="hud-round-label">Ronda 1</span>
-                    <div id="hud-timer" class="timer-display" role="status" aria-live="off">20s</div>
+                    <div id="hud-timer" class="timer-display" role="status" aria-live="off">30s</div>
                 </div>
                 <div class="score-pill">
                     <span data-i18n="defender">Defensor</span>
@@ -133,8 +130,8 @@
                 <h3 data-i18n="chooseRole">Elige tu Rol</h3>
                 <p id="role-coin-text" class="muted" data-i18n="roleCoinText">Si ambos eligen lo mismo, una moneda decidirá.</p>
                 <div class="role-buttons">
-                    <button class="btn-solid" data-role="ATT" data-i18n="attackerRole">Atacante (11 pts)</button>
-                    <button class="btn-outline" data-role="DEF" data-i18n="defenderRole">Defensor (10 pts)</button>
+                    <button class="btn-solid icon-button" data-role="ATT"><img src="assets/icon/attack.svg" alt=""><span data-i18n="attackerRole">Atacante (11 pts)</span></button>
+                    <button class="btn-outline icon-button" data-role="DEF"><img src="assets/icon/defender.svg" alt=""><span data-i18n="defenderRole">Defensor (10 pts)</span></button>
                 </div>
                 <p id="role-status-msg" class="muted"></p>
             </div>
@@ -193,7 +190,7 @@
                         <span><span data-i18n="points">Puntos</span>: <strong id="points-used">11</strong> / <span id="points-max">11</span></span>
                         <span id="constraint-badge" class="constraint-tag hidden"></span>
                     </div>
-                    <button id="btn-lock-dice" class="btn-solid" data-i18n="lockDice">Lucha</button>
+                    <button id="btn-lock-dice" class="btn-solid icon-button"><img src="assets/icon/battle.svg" alt=""><span data-i18n="lockDice">Lucha</span></button>
                 </div>
 
                 <button id="btn-return-home" class="btn-outline hidden" type="button" data-i18n="returnHome">Volver al inicio</button>

@@ -3,6 +3,14 @@ onRecordCreate((e) => {
     e.next();
 }, "users");
 
+onRecordCreateRequest((e) => {
+    const username = e.record.getString("username");
+    if (username && require(`${__hooks}/username-filter.js`).isOffensive(username)) {
+        throw new BadRequestError("Username contains prohibited words.");
+    }
+    e.next();
+}, "users");
+
 onRecordUpdateRequest((e) => {
     const auth = e.auth;
     if (!auth) throw new BadRequestError("Authentication is required.");
@@ -11,7 +19,19 @@ onRecordUpdateRequest((e) => {
     if (!e.hasSuperuserAuth() && user.get("elo") !== original.get("elo")) {
         throw new ForbiddenError("Elo can only change after an authorized match.");
     }
+    if (user.getString("username") !== original.getString("username") &&
+        require(`${__hooks}/username-filter.js`).isOffensive(user.getString("username"))) {
+        throw new BadRequestError("Username contains prohibited words.");
+    }
     e.next()
+}, "users");
+
+onRecordDeleteRequest((e) => {
+    e.app.runInTransaction((tx) => {
+        require(`${__hooks}/multiplayer.js`).removeUserMatches(tx, e.record.id);
+        tx.delete(tx.findRecordById("users", e.record.id));
+    });
+    return e.noContent(204);
 }, "users");
 
 onRecordUpdateRequest((e) => {

@@ -5,10 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reglas | Despot</title>
     <link rel="icon" href="assets/icon/favicon.svg" type="image/svg+xml">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=10">
+    <link rel="stylesheet" href="styles.css?v=13">
     <script src="pocketbase.umd.js"></script>
     <script src="auth.js?v=9" defer></script>
     <script src="rules.js?v=9" defer></script>
@@ -37,7 +34,25 @@
             </div>
         </nav>
     </header>
-    <svg class="rinceau-divider" width="100%" height="18" aria-hidden="true"></svg>
+    <svg class="rinceau-divider" width="100%" height="18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+            <pattern id="gold-rinceau" x="0" y="0" width="64" height="18" patternUnits="userSpaceOnUse">
+                <path d="M 0 9 C 9 9, 10 2.5, 19 2.5 C 25 2.5, 27 6.5, 24 9 C 21.5 11, 18 10, 18.5 7.5
+                         M 16 9 C 25 9, 26 15.5, 35 15.5 C 41 15.5, 43 11.5, 40 9 C 37.5 7, 34 8, 34.5 10.5
+                         M 32 9 C 41 9, 42 2.5, 51 2.5 C 57 2.5, 59 6.5, 56 9 C 53.5 11, 50 10, 50.5 7.5
+                         M 48 9 C 57 9, 58 15.5, 67 15.5
+                         M -16 9 C -7 9, -6 15.5, 3 15.5 C 9 15.5, 11 11.5, 8 9"
+                    fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+                <circle cx="14" cy="4.5" r="0.9" fill="currentColor"/>
+                <circle cx="30" cy="13.5" r="0.9" fill="currentColor"/>
+                <circle cx="46" cy="4.5" r="0.9" fill="currentColor"/>
+                <circle cx="62" cy="13.5" r="0.9" fill="currentColor"/>
+            </pattern>
+        </defs>
+        <line x1="0" y1="0.5" x2="100%" y2="0.5" stroke="currentColor" stroke-opacity="0.22" stroke-width="0.75"/>
+        <rect x="0" y="0" width="100%" height="18" fill="url(#gold-rinceau)"/>
+        <line x1="0" y1="17.5" x2="100%" y2="17.5" stroke="currentColor" stroke-opacity="0.22" stroke-width="0.75"/>
+    </svg>
     <main id="main-stage" class="main-stage rules-page" tabindex="-1">
         <h1 data-i18n="title">Reglas de Combate</h1>
         <div class="rules-grid">
@@ -53,7 +68,7 @@
             </article>
             <article>
                 <h2 data-i18n="orderTitle">Orden y Desbandada</h2>
-                <p class="rules-italic" data-i18n="orderText">El jugador que ganó la ronda anterior debe jugar una disposición de dados donde haya al menos dos dados con el mismo valor, mientras tanto el jugador que perdió la ronda debe jugar una disposición donde cada dado tiene un valor diferente.</p>
+                <p data-i18n="orderText">El jugador que ganó la ronda anterior debe jugar una disposición de dados donde haya al menos dos dados con el mismo valor, mientras tanto el jugador que perdió la ronda debe jugar una disposición donde cada dado tiene un valor diferente.</p>
             </article>
             <article>
                 <h2 data-i18n="wildcardsTitle">Las cinco crisóbulas</h2>
