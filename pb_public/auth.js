@@ -4,8 +4,7 @@ async function signInWithGoogle(pb) {
         queryParams: { scope: "openid email" }
     });
     const updated = await pb.collection("users").update(pb.authStore.model.id, {
-        name: "",
-        avatar: ""
+        name: ""
     });
     pb.authStore.save(pb.authStore.token, updated);
 }

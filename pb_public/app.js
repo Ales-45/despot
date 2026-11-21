@@ -1,7 +1,3 @@
-// ============================================================================
-// CLIENTE VANILLA JS
-// ============================================================================
-
 const pb = new PocketBase(window.location.origin);
 const ROUND_DURATION_MS = 30000;
 const BALLESTEROS_PENALTY_MS = 10000;
@@ -17,7 +13,7 @@ languageButton.textContent = savedLanguage;
 const state = {
     match: null,
     round: null,
-    myDice: [4, 4, 3],
+    myDice: startingDice(),
     timerInterval: null,
     roundAdvanceTimeout: null,
     serverClockOffset: 0,
@@ -39,7 +35,7 @@ const joinPrivateModal = setupModal(document.getElementById("join-private-modal"
 
 const translations = {
     ES: {
-        rules: "Reglas", login: "Entrar", createMatch: "Crear partida",
+        rules: "Reglas", login: "Acceder", createMatch: "Crear partida",
         openRooms: "Campos de batalla",
         player: "Jugador", profile: "Perfil", logout: "Cerrar sesión", createMatchTitle: "Crear partida",
         privateMatch: "Partida privada", createRoom: "Crear sala",
@@ -322,7 +318,7 @@ function updateAuthButton() {
         btn.setAttribute("aria-label", username);
         btn.title = username;
     } else {
-        const label = translations[languageButton.dataset.language]?.login || "Entrar";
+        const label = translations[languageButton.dataset.language]?.login || "Acceder";
         btn.classList.remove("is-avatar");
         btn.textContent = label;
         btn.setAttribute("aria-label", label);
@@ -434,9 +430,8 @@ document.getElementById("private-match").addEventListener("change", (event) => {
     document.getElementById("pin-row").classList.toggle("hidden", !event.target.checked);
 });
 
-function startingDice(isAtt, constraint) {
-    if (constraint === "ROUT") return isAtt ? [6, 3, 2] : [5, 3, 2];
-    return isAtt ? [4, 4, 3] : [4, 3, 3];
+function startingDice() {
+    return [1, 1, 1];
 }
 
 function chooseBotDice(constraint, budget) {
@@ -468,7 +463,7 @@ function startBotMatch() {
     state.botResults = [];
     state.roundSync++;
     resetResolution();
-    state.myDice = [4,4,3];
+    state.myDice = startingDice();
     state.match = {
         room_code: "BOT",
         att_score: 0,
@@ -758,7 +753,7 @@ function resolveBotRound(timedOut = false) {
         if (!state.botMode || state.match.status !== "PLAYING") return;
         state.round.att_constraint = humanIsAttacker ? humanConstraint : botConstraint;
         state.round.def_constraint = humanIsAttacker ? botConstraint : humanConstraint;
-        state.myDice = startingDice(humanIsAttacker, humanConstraint);
+        state.myDice = startingDice();
         state.botDice = chooseBotDice(botConstraint, humanIsAttacker ? 10 : 11);
         state.botRound += 1;
         state.match.current_round = state.botRound;
@@ -836,7 +831,7 @@ document.querySelectorAll("#stage-roles button").forEach(btn => {
             state.match.status = "PLAYING";
             state.round.phase = "LOCKING";
             state.round.ends_at = new Date(Date.now() + ROUND_DURATION_MS).toISOString();
-            state.myDice = startingDice(choice === "ATT", "FREE");
+            state.myDice = startingDice();
             state.botDice = chooseBotDice("FREE", choice === "ATT" ? 10 : 11);
             renderMatchState();
             return;
@@ -868,8 +863,7 @@ function handleRoundUpdate(round) {
     const isAtt = state.match.attacker_id === humanId();
     if (isNewRound) {
         state.lockedLocally = false;
-        const constraint = isAtt ? round.att_constraint : round.def_constraint;
-        state.myDice = startingDice(isAtt, constraint);
+        state.myDice = startingDice();
         document.getElementById("btn-lock-dice").disabled = false;
         resetResolution();
         for (let i = 0; i < 3; i++) {
