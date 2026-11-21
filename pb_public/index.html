@@ -9,32 +9,41 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=10">
     <script src="pocketbase.umd.js"></script>
-    <script src="app.js?v=3" defer></script>
+    <script src="auth.js?v=9" defer></script>
+    <script src="game-engine.js" defer></script>
+    <script src="app.js?v=12" defer></script>
 </head>
 
 <body>
+    <a class="skip-link" href="#main-stage" data-i18n="skip">Saltar al contenido</a>
 
     <!-- HEADER MINIMALISTA -->
     <header class="site-header">
-        <button id="btn-home" class="logo-slot" title="Inicio" aria-label="Inicio">
+        <button id="btn-home" class="logo-slot" title="Inicio" aria-label="Inicio" data-i18n-title="home" data-i18n-aria="home">
             <img src="assets/icon/logo.svg" alt="Despot">
         </button>
 
         <nav class="header-nav">
-            <button id="btn-nav-rules" class="nav-link" data-i18n="rules">Reglas</button>
-            <button id="btn-theme" class="theme-btn" title="Cambiar tema" aria-label="Cambiar tema"></button>
+            <a class="nav-link nav-icon-link" href="rules.html"><img src="assets/icon/rules.svg" alt=""><span data-i18n="rules">Reglas</span></a>
+            <button id="btn-theme" class="theme-btn" title="Cambiar tema" aria-label="Cambiar tema" data-i18n-title="theme" data-i18n-aria="theme"></button>
             <div class="lang-dropdown">
                 <button id="btn-lang" class="nav-link lang-btn" type="button" aria-expanded="false"
-                    title="Idioma">ES</button>
+                    title="Idioma" data-i18n-title="language" data-i18n-aria="language">ES</button>
                 <ul id="lang-menu" class="lang-menu" hidden>
                     <li><button type="button" data-lang="ES">ES</button></li>
                     <li><button type="button" data-lang="EN">EN</button></li>
                     <li><button type="button" data-lang="IT">IT</button></li>
                 </ul>
             </div>
-            <button id="btn-auth" class="profile-button" type="button" title="Perfil" data-i18n="login">Entrar</button>
+            <div class="auth-dropdown">
+                <button id="btn-auth" class="profile-button" type="button" title="Perfil" data-i18n="login">Entrar</button>
+                <ul id="auth-menu" class="lang-menu auth-menu" hidden>
+                    <li><a href="profile.html"><img src="assets/icon/profile.svg" alt=""><span data-i18n="profile">Perfil</span></a></li>
+                    <li><button id="btn-logout" type="button"><img src="assets/icon/logout.svg" alt=""><span data-i18n="logout">Cerrar sesión</span></button></li>
+                </ul>
+            </div>
         </nav>
     </header>
 
@@ -60,20 +69,21 @@
     </svg>
 
     <!-- CONTENIDO PRINCIPAL DINÁMICO -->
-    <main class="main-stage">
+    <main id="main-stage" class="main-stage" tabindex="-1">
 
         <!-- VISTA 1: HOME / LISTADO DE PARTIDAS -->
         <section id="view-lobby" class="view active">
             <div class="lobby-actions">
                 <button id="btn-create-match" class="btn-solid" data-i18n="createMatch">Crear partida</button>
+                <button id="btn-play-bot" class="btn-outline" type="button" data-i18n="playBot">Jugar contra la máquina</button>
                 <div class="join-box">
-                    <input type="text" id="input-room-code" maxlength="4" placeholder="CÓDIGO" autocomplete="off">
-                    <button id="btn-join-match" class="btn-outline">Unirse</button>
+                    <input type="text" id="input-room-code" maxlength="4" placeholder="CÓDIGO" data-i18n-placeholder="code" aria-label="Código de sala" data-i18n-aria="roomCode" autocomplete="off">
+                    <button id="btn-join-match" class="btn-outline" data-i18n="joinMatch">Unirse</button>
                 </div>
             </div>
 
             <div class="match-filters">
-                <input type="search" id="match-search" placeholder="Buscar anfitrión">
+                <input type="search" id="match-search" placeholder="Buscar anfitrión" data-i18n-placeholder="searchHost" aria-label="Buscar anfitrión" data-i18n-aria="searchHost">
             </div>
 
             <div class="rinceau-divider subtle" aria-hidden="true">
@@ -83,7 +93,7 @@
             </div>
 
             <div class="open-matches-block">
-                <h2 data-i18n="openRooms">Salas abiertas</h2>
+                <h2 data-i18n="openRooms">Campos de batalla</h2>
                 <ul id="matches-list" class="matches-list">
                     <li class="empty-msg">Buscando partidas disponibles...</li>
                 </ul>
@@ -95,33 +105,36 @@
             <!-- Barra superior de estado de partida -->
             <div class="match-hud">
                 <div class="score-pill">
-                    <span>Atacante</span>
+                    <span data-i18n="attacker">Atacante</span>
                     <strong id="hud-att-score">0</strong>
                 </div>
                 <div class="round-center">
                     <span id="hud-room-code" class="room-tag">----</span>
                     <span id="hud-round-label">Ronda 1</span>
-                    <div id="hud-timer" class="timer-display">20s</div>
+                    <div id="hud-timer" class="timer-display" role="status" aria-live="off">20s</div>
                 </div>
                 <div class="score-pill">
-                    <span>Defensor</span>
+                    <span data-i18n="defender">Defensor</span>
                     <strong id="hud-def-score">0</strong>
                 </div>
             </div>
 
             <!-- Sub-fase A: Espera de rival -->
             <div id="stage-waiting" class="board-substage hidden">
-                <p>Comparte el código de sala: <strong id="wait-code-display">----</strong></p>
-                <p class="muted">Esperando oponente...</p>
+                <button id="btn-close-match" class="btn-outline close-match-button" type="button" data-i18n="closeMatch">Cerrar partida</button>
+                <p><span data-i18n="shareCode">Comparte el código de sala:</span> <strong id="wait-code-display">----</strong></p>
+                <div id="waiting-players" class="waiting-players"></div>
+                <p id="waiting-message" class="muted" data-i18n="waitingOpponent">Esperando oponente...</p>
+                <button id="btn-start-match" class="btn-solid hidden" type="button" data-i18n="startMatch">Iniciar partida</button>
             </div>
 
             <!-- Sub-fase B: Elección de Rol (Fase 1) -->
             <div id="stage-roles" class="board-substage hidden">
-                <h3>Elige tu Rol</h3>
-                <p class="muted">Si ambos eligen lo mismo, una moneda decidirá.</p>
+                <h3 data-i18n="chooseRole">Elige tu Rol</h3>
+                <p id="role-coin-text" class="muted" data-i18n="roleCoinText">Si ambos eligen lo mismo, una moneda decidirá.</p>
                 <div class="role-buttons">
-                    <button class="btn-solid" data-role="ATT">Atacante (11 pts)</button>
-                    <button class="btn-outline" data-role="DEF">Defensor (10 pts)</button>
+                    <button class="btn-solid" data-role="ATT" data-i18n="attackerRole">Atacante (11 pts)</button>
+                    <button class="btn-outline" data-role="DEF" data-i18n="defenderRole">Defensor (10 pts)</button>
                 </div>
                 <p id="role-status-msg" class="muted"></p>
             </div>
@@ -129,131 +142,107 @@
             <!-- Sub-fase C: Combate en Espejo (Fases 2 y 3) -->
             <div id="stage-combat" class="board-substage hidden">
                 <!-- Pista privada de Ballesteros (solo aparece si aplica) -->
-                <div id="ballesteros-banner" class="hint-banner hidden"></div>
+                <div id="ballesteros-banner" class="hint-banner hidden" aria-label="Pista de Ballesteros" data-i18n-aria="hint">
+                    <img id="ballesteros-icon" src="assets/icon/balestra.svg" alt="">
+                </div>
 
                 <!-- Formación Rival (Arriba) -->
                 <div class="army-row opponent-row">
                     <div class="section-slot">
-                        <span class="slot-label" id="opp-label-0">Retaguardia</span>
-                        <img class="die-box opp-die" id="opp-die-0" src="assets/r_dice/r1.svg" alt="Opposing die">
+                        <span class="die-face"><img class="die-box opp-die" id="opp-die-0" src="assets/r_dice/r1.svg" alt="Dado rival" data-i18n-alt="opponentDie"><span class="die-effects"></span></span>
                     </div>
                     <div class="section-slot">
-                        <span class="slot-label" id="opp-label-1">Centro</span>
-                        <img class="die-box opp-die" id="opp-die-1" src="assets/r_dice/r1.svg" alt="Opposing die">
+                        <span class="die-face"><img class="die-box opp-die" id="opp-die-1" src="assets/r_dice/r1.svg" alt="Dado rival" data-i18n-alt="opponentDie"><span class="die-effects"></span></span>
                     </div>
                     <div class="section-slot">
-                        <span class="slot-label" id="opp-label-2">Vanguardia</span>
-                        <img class="die-box opp-die" id="opp-die-2" src="assets/r_dice/r1.svg" alt="Opposing die">
+                        <span class="die-face"><img class="die-box opp-die" id="opp-die-2" src="assets/r_dice/r1.svg" alt="Dado rival" data-i18n-alt="opponentDie"><span class="die-effects"></span></span>
                     </div>
                 </div>
 
                 <!-- Línea de choque (Resultados de cada sección) -->
-                <div class="clash-row">
-                    <div class="clash-indicator" id="clash-0">-</div>
-                    <div class="clash-indicator" id="clash-1">-</div>
-                    <div class="clash-indicator" id="clash-2">-</div>
-                </div>
+                <div class="clash-row" aria-hidden="true"></div>
 
                 <!-- Formación Propia (Abajo - Izquierda a Derecha = Vanguardia a Retaguardia si eres Atacante) -->
                 <div class="army-row player-row">
                     <div class="section-slot">
                         <div class="die-control">
-                            <button class="step-btn" data-idx="0" data-delta="1" aria-label="Aumentar dado"><img src="assets/icon/balestra_up.svg" alt=""></button>
-                            <img class="die-box player-die" id="my-die-0" src="assets/b_dice/b4.svg" alt="Player die">
-                            <button class="step-btn" data-idx="0" data-delta="-1" aria-label="Reducir dado"><img src="assets/icon/balestra_down.svg" alt=""></button>
+                            <button class="step-btn" data-idx="0" data-delta="1" aria-label="Aumentar dado" data-i18n-aria="increaseDice"><img src="assets/icon/arrow_up.svg" alt=""></button>
+                            <span class="die-face"><img class="die-box player-die" id="my-die-0" src="assets/b_dice/b4.svg" alt="Dado propio" data-i18n-alt="myDie"><span class="die-effects"></span></span>
+                            <button class="step-btn" data-idx="0" data-delta="-1" aria-label="Reducir dado" data-i18n-aria="decreaseDice"><img src="assets/icon/arrow_down.svg" alt=""></button>
                         </div>
-                        <span class="slot-label" id="my-label-0">Vanguardia</span>
                     </div>
                     <div class="section-slot">
                         <div class="die-control">
-                            <button class="step-btn" data-idx="1" data-delta="1" aria-label="Aumentar dado"><img src="assets/icon/balestra_up.svg" alt=""></button>
-                            <img class="die-box player-die" id="my-die-1" src="assets/b_dice/b4.svg" alt="Player die">
-                            <button class="step-btn" data-idx="1" data-delta="-1" aria-label="Reducir dado"><img src="assets/icon/balestra_down.svg" alt=""></button>
+                            <button class="step-btn" data-idx="1" data-delta="1" aria-label="Aumentar dado" data-i18n-aria="increaseDice"><img src="assets/icon/arrow_up.svg" alt=""></button>
+                            <span class="die-face"><img class="die-box player-die" id="my-die-1" src="assets/b_dice/b4.svg" alt="Dado propio" data-i18n-alt="myDie"><span class="die-effects"></span></span>
+                            <button class="step-btn" data-idx="1" data-delta="-1" aria-label="Reducir dado" data-i18n-aria="decreaseDice"><img src="assets/icon/arrow_down.svg" alt=""></button>
                         </div>
-                        <span class="slot-label" id="my-label-1">Centro</span>
                     </div>
                     <div class="section-slot">
                         <div class="die-control">
-                            <button class="step-btn" data-idx="2" data-delta="1" aria-label="Aumentar dado"><img src="assets/icon/balestra_up.svg" alt=""></button>
-                            <img class="die-box player-die" id="my-die-2" src="assets/b_dice/b3.svg" alt="Player die">
-                            <button class="step-btn" data-idx="2" data-delta="-1" aria-label="Reducir dado"><img src="assets/icon/balestra_down.svg" alt=""></button>
+                            <button class="step-btn" data-idx="2" data-delta="1" aria-label="Aumentar dado" data-i18n-aria="increaseDice"><img src="assets/icon/arrow_up.svg" alt=""></button>
+                            <span class="die-face"><img class="die-box player-die" id="my-die-2" src="assets/b_dice/b3.svg" alt="Dado propio" data-i18n-alt="myDie"><span class="die-effects"></span></span>
+                            <button class="step-btn" data-idx="2" data-delta="-1" aria-label="Reducir dado" data-i18n-aria="decreaseDice"><img src="assets/icon/arrow_down.svg" alt=""></button>
                         </div>
-                        <span class="slot-label" id="my-label-2">Retaguardia</span>
                     </div>
                 </div>
 
                 <!-- Controles de Presupuesto, Restricción y Fijar -->
                 <div class="command-bar">
                     <div class="budget-info">
-                        <span>Puntos: <strong id="points-used">11</strong> / <span id="points-max">11</span></span>
-                        <span id="constraint-badge" class="constraint-tag">Formación Libre</span>
+                        <span><span data-i18n="points">Puntos</span>: <strong id="points-used">11</strong> / <span id="points-max">11</span></span>
+                        <span id="constraint-badge" class="constraint-tag hidden"></span>
                     </div>
-                    <button id="btn-lock-dice" class="btn-solid">Fijar Formación</button>
+                    <button id="btn-lock-dice" class="btn-solid" data-i18n="lockDice">Lucha</button>
                 </div>
 
-                <!-- Registro breve de resolución -->
-                <div id="resolution-feed" class="resolution-feed"></div>
+                <button id="btn-return-home" class="btn-outline hidden" type="button" data-i18n="returnHome">Volver al inicio</button>
+                <p id="elo-unrated" class="muted hidden" role="status"></p>
+                <table id="match-results" class="match-results hidden">
+                    <caption class="sr-only" data-i18n="matchResults">Resultados de las rondas</caption>
+                    <tbody></tbody>
+                </table>
             </div>
         </section>
 
-        <!-- VISTA 3: REGLAS -->
-        <section id="view-rules" class="view">
-            <h2 data-i18n="combatRules">Reglas de Combate</h2>
-            <div class="rules-grid">
-                <article>
-                    <h3>1. Roles y Presupuesto</h3>
-                    <p>El <strong>Atacante</strong> reparte hasta <strong>11 puntos</strong> en 3 dados (1-6). El
-                        <strong>Defensor</strong> reparte hasta <strong>10 puntos</strong> y gana todos los empates de
-                        sección.</p>
-                </article>
-                <article>
-                    <h3>2. Orden y Desbandada</h3>
-                    <p>Quien gana una ronda entra en <strong>Orden</strong> (obligado a jugar al menos un par). Quien
-                        pierde entra en <strong>Desbandada</strong> (los 3 dados deben ser distintos).</p>
-                </article>
-                <article>
-                    <h3>3. Las 5 Crisóbulas</h3>
-                    <ul>
-                        <li><strong>Fuego Griego:</strong> Un <code>1</code> derrota a un <code>6</code>.</li>
-                        <li><strong>Almogávar:</strong> Un dado &ge; 4 que duplique al rival suma <code>+1</code> al
-                            siguiente dado aliado (izquierda a derecha). En retaguardia atacante, gana rondas empatadas.
-                        </li>
-                        <li><strong>Turcopolos:</strong> Fijar exactamente 3 puntos bajo tu límite reemplaza tu dado
-                            menor por <code>1d6</code> aleatorio.</li>
-                        <li><strong>Varegos:</strong> Ganar los 3 enfrentamientos (3-0) otorga <strong>2 puntos</strong>
-                            de ronda.</li>
-                        <li><strong>Ballesteros:</strong> En rondas posteriores, el primer jugador en fijar reduce el
-                            reloj del rival y permite una pista sobre su formación anterior.</li>
-                    </ul>
-                </article>
-            </div>
-        </section>
     </main>
 
     <div id="create-match-modal" class="modal hidden" role="dialog" aria-modal="true"
         aria-labelledby="create-match-title">
         <div class="modal-card">
             <div class="modal-heading">
-                <h2 id="create-match-title">Crear partida</h2>
+                <h2 id="create-match-title" data-i18n="createMatchTitle">Crear partida</h2>
                 <button id="btn-close-create-match" class="modal-close" type="button"
-                    aria-label="Cerrar">×</button>
+                    aria-label="Cerrar" data-i18n-aria="close">×</button>
             </div>
             <label class="switch-row">
                 <input id="private-match" type="checkbox">
-                <span>Partida privada</span>
-            </label>
-            <label class="switch-row">
-                <input id="bot-match" type="checkbox">
-                <span>Jugar contra la máquina</span>
+                <span data-i18n="privateMatch">Partida privada</span>
             </label>
             <label id="pin-row" class="pin-row hidden">
                 <span>PIN</span>
                 <input id="match-pin" type="password" inputmode="numeric" maxlength="8"
-                    autocomplete="off" placeholder="4-8 dígitos">
+                    autocomplete="off" placeholder="4-8 dígitos" data-i18n-placeholder="pinPlaceholder">
             </label>
-            <button id="btn-start-created-match" class="btn-solid" type="button">Crear sala</button>
+            <button id="btn-start-created-match" class="btn-solid" type="button" data-i18n="createRoom">Crear sala</button>
         </div>
     </div>
+    <div id="join-private-modal" class="modal hidden" role="dialog" aria-modal="true"
+        aria-labelledby="join-private-title">
+        <div class="modal-card">
+            <div class="modal-heading">
+                <h2 id="join-private-title" data-i18n="joinPrivateTitle">Unirse con PIN</h2>
+                <button id="btn-close-join-private" class="modal-close" type="button" aria-label="Cerrar" data-i18n-aria="close">×</button>
+            </div>
+            <label class="pin-row">
+                <span>PIN</span>
+                <input id="join-match-pin" type="password" inputmode="numeric" maxlength="8"
+                    autocomplete="off" placeholder="4-8 dígitos" data-i18n-placeholder="pinPlaceholder">
+            </label>
+            <button id="btn-confirm-private-join" class="btn-solid" type="button" data-i18n="joinMatch">Unirse</button>
+        </div>
+    </div>
+    <div id="toast-stack" class="toast-stack" aria-live="polite" aria-label="Mensajes" data-i18n-aria="messages"></div>
 </body>
 
 </html>

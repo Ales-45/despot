@@ -9,18 +9,20 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles.css?v=10">
     <script src="pocketbase.umd.js"></script>
-    <script src="profile.js" defer></script>
+    <script src="auth.js?v=9" defer></script>
+    <script src="profile.js?v=9" defer></script>
 </head>
 
 <body>
+    <a class="skip-link" href="#main-stage" data-i18n="skip">Saltar al contenido</a>
     <header class="site-header">
         <a class="logo-slot" href="/" title="Inicio" aria-label="Inicio">
             <img src="assets/icon/logo.svg" alt="Despot">
         </a>
         <nav class="header-nav">
-            <button id="btn-nav-rules" class="nav-link" data-i18n="rules">Reglas</button>
+            <a class="nav-link nav-icon-link" href="rules.html"><img src="assets/icon/rules.svg" alt=""><span data-i18n="rules">Reglas</span></a>
             <button id="btn-theme" class="theme-btn" type="button" title="Cambiar tema" aria-label="Cambiar tema"></button>
             <div class="lang-dropdown">
                 <button id="btn-lang" class="nav-link lang-btn" type="button" aria-expanded="false"
@@ -31,9 +33,15 @@
                     <li><button type="button" data-lang="IT">IT</button></li>
                 </ul>
             </div>
-            <button id="btn-auth" class="profile-button" type="button" title="Perfil" aria-label="Perfil">
-                <img id="header-avatar" src="assets/profile/prof01.svg" alt="Perfil">
-            </button>
+            <div class="auth-dropdown">
+                <button id="btn-auth" class="profile-button is-avatar" type="button" title="Perfil" aria-label="Perfil">
+                    <img id="header-avatar" src="assets/profile/prof01.svg" alt="">
+                </button>
+                <ul id="auth-menu" class="lang-menu auth-menu" hidden>
+                    <li><a href="profile.html"><img src="assets/icon/profile.svg" alt=""><span data-i18n="profile">Perfil</span></a></li>
+                    <li><button id="btn-logout" type="button"><img src="assets/icon/logout.svg" alt=""><span data-i18n="logout">Cerrar sesión</span></button></li>
+                </ul>
+            </div>
         </nav>
     </header>
 
@@ -57,24 +65,36 @@
         <line x1="0" y1="17.5" x2="100%" y2="17.5" stroke="currentColor" stroke-opacity="0.22" stroke-width="0.75"/>
     </svg>
 
-    <main class="main-stage profile-page">
+    <main id="main-stage" class="main-stage profile-page" tabindex="-1">
         <section class="profile-card" aria-labelledby="profile-title">
             <h1 id="profile-title" data-i18n="profile">Perfil</h1>
-            <img id="profile-avatar" class="profile-avatar" src="assets/profile/prof01.svg" alt="Avatar">
+            <button id="btn-change-avatar" class="profile-avatar-trigger" type="button" title="Cambiar imagen de perfil" aria-label="Cambiar imagen de perfil">
+                <img id="profile-avatar" class="profile-avatar" src="assets/profile/prof01.svg" alt="">
+            </button>
+            <p class="profile-elo">Elo: <strong id="profile-elo">—</strong></p>
             <label class="profile-field">
                 <span data-i18n="username">Nombre de usuario</span>
                 <input id="profile-username-input" type="text" maxlength="32" autocomplete="username">
             </label>
-            <h2 class="profile-section-title" data-i18n="chooseAvatar">Elige tu imagen</h2>
-            <div id="profile-avatar-grid" class="profile-avatar-grid" aria-label="Elegir imagen de perfil"></div>
             <div class="profile-actions">
                 <button id="btn-save-profile" class="btn-solid" type="button" data-i18n="save">Guardar</button>
-                <button id="btn-logout" class="btn-outline" type="button" data-i18n="logout">Cerrar sesión</button>
                 <button id="btn-delete-account" class="btn-danger" type="button" data-i18n="deleteAccount">Eliminar cuenta</button>
             </div>
-            <p id="profile-status" class="profile-status" role="status" aria-live="polite"></p>
+            <details class="profile-history">
+                <summary class="profile-section-title" data-i18n="history">Historial de rondas</summary>
+                <ul id="round-history" class="round-history"></ul>
+            </details>
         </section>
     </main>
+    <div id="avatar-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="avatar-title">
+        <div class="modal-card">
+            <div class="modal-heading">
+                <h2 id="avatar-title" data-i18n="chooseAvatar">Elige tu imagen</h2>
+                <button id="btn-close-avatar" class="modal-close" type="button" aria-label="Cerrar">×</button>
+            </div>
+            <div id="profile-avatar-grid" class="profile-avatar-grid" role="group" aria-label="Elige tu imagen"></div>
+        </div>
+    </div>
     <div id="delete-account-modal" class="modal hidden" role="dialog" aria-modal="true"
         aria-labelledby="delete-account-title">
         <div class="modal-card">
@@ -89,6 +109,7 @@
             </div>
         </div>
     </div>
+    <div id="toast-stack" class="toast-stack" aria-live="polite" aria-label="Mensajes"></div>
 </body>
 
 </html>

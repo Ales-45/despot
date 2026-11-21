@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reglas | Despot</title>
+    <link rel="icon" href="assets/icon/favicon.svg" type="image/svg+xml">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IM+Fell+DW+Pica:ital@0;1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css?v=10">
+    <script src="pocketbase.umd.js"></script>
+    <script src="auth.js?v=9" defer></script>
+    <script src="rules.js?v=9" defer></script>
+</head>
+<body>
+    <a class="skip-link" href="#main-stage" data-i18n="skip">Saltar al contenido</a>
+    <header class="site-header">
+        <a class="logo-slot" href="/" title="Inicio" aria-label="Inicio"><img src="assets/icon/logo.svg" alt="Despot"></a>
+        <nav class="header-nav">
+            <a class="nav-link nav-icon-link active" href="rules.html"><img src="assets/icon/rules.svg" alt=""><span data-i18n="rules">Reglas</span></a>
+            <button id="btn-theme" class="theme-btn" type="button" title="Cambiar tema" aria-label="Cambiar tema"></button>
+            <div class="lang-dropdown">
+                <button id="btn-lang" class="nav-link lang-btn" type="button" aria-expanded="false" title="Idioma">ES</button>
+                <ul id="lang-menu" class="lang-menu" hidden>
+                    <li><button type="button" data-lang="ES">ES</button></li>
+                    <li><button type="button" data-lang="EN">EN</button></li>
+                    <li><button type="button" data-lang="IT">IT</button></li>
+                </ul>
+            </div>
+            <div class="auth-dropdown">
+                <button id="btn-auth" class="profile-button" type="button" title="Perfil">Entrar</button>
+                <ul id="auth-menu" class="lang-menu auth-menu" hidden>
+                    <li><a href="profile.html"><img src="assets/icon/profile.svg" alt=""><span data-i18n="profile">Perfil</span></a></li>
+                    <li><button id="btn-logout" type="button"><img src="assets/icon/logout.svg" alt=""><span data-i18n="logout">Cerrar sesión</span></button></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+    <svg class="rinceau-divider" width="100%" height="18" aria-hidden="true"></svg>
+    <main id="main-stage" class="main-stage rules-page" tabindex="-1">
+        <h1 data-i18n="title">Reglas de Combate</h1>
+        <div class="rules-grid">
+            <article>
+                <h2 data-i18n="rolesTitle">Roles y presupuesto</h2>
+                <p data-i18n="rolesText">El Atacante reparte hasta 11 puntos en tres dados. El Defensor reparte hasta 10 puntos y gana los empates de sección.</p>
+                <img src="assets/manual/m_roles" alt="Roles y formación" data-i18n-alt="rolesImage" class="rules-figure">
+            </article>
+            <article>
+                <h2 data-i18n="battleTitle">Combate y formación</h2>
+                <p data-i18n="battleText">Los dados se enfrentan en espejo de vanguardia a retaguardia. Se necesitan al menos dos secciones para ganar la ronda.</p>
+                <img src="assets/manual/m_battle.jpg" alt="Combate en espejo" data-i18n-alt="battleImage" class="rules-figure">
+            </article>
+            <article>
+                <h2 data-i18n="orderTitle">Orden y Desbandada</h2>
+                <p class="rules-italic" data-i18n="orderText">El jugador que ganó la ronda anterior debe jugar una disposición de dados donde haya al menos dos dados con el mismo valor, mientras tanto el jugador que perdió la ronda debe jugar una disposición donde cada dado tiene un valor diferente.</p>
+            </article>
+            <article>
+                <h2 data-i18n="wildcardsTitle">Las cinco crisóbulas</h2>
+                <div id="wildcard-carousel" class="wildcard-carousel" aria-live="polite">
+                    <button id="wildcard-prev" class="carousel-arrow" type="button" aria-label="Anterior">‹</button>
+                    <div class="wildcard-slide">
+                        <img id="wildcard-icon" src="assets/icon/fire.svg" alt="">
+                        <h3 id="wildcard-name">Fuego Griego</h3>
+                        <p id="wildcard-text">Un dado con valor de 1 derrota a un dado opuesto con valor de 6.</p>
+                    </div>
+                    <button id="wildcard-next" class="carousel-arrow" type="button" aria-label="Siguiente">›</button>
+                </div>
+            </article>
+        </div>
+    </main>
+    <div id="toast-stack" class="toast-stack" aria-live="polite"></div>
+</body>
+</html>
