@@ -1,3 +1,13 @@
+routerUse((e) => {
+    const path = e.request.url.path;
+    // Keep PocketBase's dashboard and OAuth callback under their own policies.
+    if (path !== "/_" && !path.startsWith("/_/") && path !== "/api/oauth2-redirect") {
+        e.response.header().set("Content-Security-Policy",
+            "default-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'");
+    }
+    return e.next();
+});
+
 onRecordCreate((e) => {
     e.record.set("elo", 1000);
     e.next();
