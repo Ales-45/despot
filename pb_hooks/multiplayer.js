@@ -95,11 +95,21 @@ function cleanupMatches(app) {
                     tx.save(match);
                     return;
                 }
-                if (Date.now() - new Date(last).getTime() < 5 * 60 * 1000) return;
-                removeMatch(tx, match);
+                if (Date.now() - new Date(last).getTime() >= 5 * 60 * 1000) {
+                    removeMatch(tx, match);
+                    return;
+                }
+                if (status !== "PLAYING") return;
+                const round = findOne(tx, "rounds", "match_id = {:match} && round_number = {:number}", {
+                    match: match.id, number: match.getInt("current_round")
+                });
+                if (round.getString("phase") !== "LOCKING" ||
+                    Date.now() < new Date(round.getString("ends_at")).getTime()) return;
+                const lock = findOne(tx, "round_locks", "round = {:id}", { id: round.id });
+                finishRound(tx, match, round, lock);
             });
         } catch (error) {
-            console.error("Could not remove match " + candidate.id + ": " + error);
+            console.error("Could not process match " + candidate.id + ": " + error);
         }
     }
     app.runInTransaction((tx) => {
