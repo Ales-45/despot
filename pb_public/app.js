@@ -58,7 +58,7 @@ const translations = {
         roundWon: "Gana", roundLost: "Pérdida", matchResults: "Resultados de las rondas: atacante contra defensor",
         unrated: "Sin Elo: ya jugaron hoy (UTC).",
         alreadyOpen: "Ya tienes una partida abierta.", roomFull: "La sala ya tiene rival.",
-        invalidFormation: "La formación no cumple el presupuesto o la restricción.", expired: "El tiempo de la ronda ha expirado.",
+        invalidFormation: "Formación no válida.", expired: "El tiempo de la ronda ha expirado.",
         alreadyLocked: "Ya fijaste tus dados.", roundNotStarted: "La ronda aún no ha comenzado.", roomUnavailable: "La sala ya no está disponible.",
         notParticipant: "No perteneces a esta partida.", notHost: "Solo el anfitrión puede iniciar.",
         opponentMissing: "Falta un rival.", roleAlready: "Ya elegiste tu rol.", roundInactive: "La ronda ya no está activa.",
@@ -92,7 +92,7 @@ const translations = {
         roundWon: "Win", roundLost: "Loss", matchResults: "Round results: attacker versus defender",
         unrated: "Unrated: already played today (UTC).",
         alreadyOpen: "You already have an open match.", roomFull: "The room already has an opponent.",
-        invalidFormation: "The formation does not meet the budget or restriction.", expired: "The round time has expired.",
+        invalidFormation: "Invalid formation.", expired: "The round time has expired.",
         alreadyLocked: "Your dice are already locked.", roundNotStarted: "The round has not started yet.", roomUnavailable: "The room is no longer available.",
         notParticipant: "You are not in this match.", notHost: "Only the host can start.",
         opponentMissing: "An opponent is required.", roleAlready: "You already chose a role.", roundInactive: "The round is no longer active.",
@@ -126,7 +126,7 @@ const translations = {
         roundWon: "Vinta", roundLost: "Persa", matchResults: "Risultati dei turni: attaccante contro difensore",
         unrated: "Senza Elo: avete già giocato oggi (UTC).",
         alreadyOpen: "Hai già una partita aperta.", roomFull: "La stanza ha già un avversario.",
-        invalidFormation: "La formazione non rispetta il budget o la restrizione.", expired: "Il tempo del turno è scaduto.",
+        invalidFormation: "Formazione non valida.", expired: "Il tempo del turno è scaduto.",
         alreadyLocked: "Hai già fissato i dadi.", roundNotStarted: "Il turno non è ancora iniziato.", roomUnavailable: "La stanza non è più disponibile.",
         notParticipant: "Non partecipi a questa partita.", notHost: "Solo l'ospite può iniziare.",
         opponentMissing: "Manca un avversario.", roleAlready: "Hai già scelto un ruolo.", roundInactive: "Il turno non è più attivo.",
@@ -946,6 +946,12 @@ document.getElementById("btn-lock-dice").addEventListener("click", async () => {
     if (state.lockedLocally || !state.round) return;
     if (state.botMode) {
         resolveBotRound();
+        return;
+    }
+    const isAtt = state.match.attacker_id === humanId();
+    const constraint = isAtt ? state.round.att_constraint : state.round.def_constraint;
+    if (!DespotGame.validFormation(state.myDice, isAtt ? 11 : 10, constraint)) {
+        showToast("invalidFormation", "400", "error");
         return;
     }
     try {

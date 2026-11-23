@@ -4,8 +4,9 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
     function validFormation(dice, budget, constraint) {
         if (!Array.isArray(dice) || dice.length !== 3 ||
-            dice.some(value => !Number.isInteger(value) || value < 1 || value > 6) ||
-            dice.reduce((sum, value) => sum + value, 0) > budget) return false;
+            dice.some(value => !Number.isInteger(value) || value < 1 || value > 6)) return false;
+        const deficit = budget - dice.reduce((sum, value) => sum + value, 0);
+        if (deficit !== 0 && deficit !== 3) return false;
         const distinct = new Set(dice).size;
         return (constraint !== "ORDER" || distinct < 3) && (constraint !== "ROUT" || distinct === 3);
     }
@@ -24,7 +25,8 @@
                 steps.push({ type: "UNDER_LIMIT_LOSS", side, deficit });
                 return null;
             }
-            const index = dice.indexOf(Math.min(...dice));
+            const minimum = Math.min(...dice);
+            const index = side === "DEF" ? dice.lastIndexOf(minimum) : dice.indexOf(minimum);
             const from = dice[index];
             dice[index] = roll();
             steps.push({ type: "TURCOPOLOS", side, index, from, to: dice[index] });
