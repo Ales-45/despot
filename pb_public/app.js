@@ -937,19 +937,27 @@ document.getElementById("btn-lock-dice").addEventListener("click", async () => {
         resolveBotRound();
         return;
     }
+    if (Date.now() + state.serverClockOffset >= new Date(state.round.ends_at).getTime()) {
+        document.getElementById("btn-lock-dice").disabled = true;
+        return;
+    }
     const isAtt = state.match.attacker_id === humanId();
     const constraint = isAtt ? state.round.att_constraint : state.round.def_constraint;
     if (!DespotGame.validFormation(state.myDice, isAtt ? 11 : 10, constraint)) {
         showToast("invalidFormation", "400", "error");
         return;
     }
+    const round = state.round;
     try {
         state.lockedLocally = true;
         document.getElementById("btn-lock-dice").disabled = true;
-        await gameRequest("lock", { round_id: state.round.id, dice: Array.from(state.myDice) });
+        await gameRequest("lock", { round_id: round.id, dice: Array.from(state.myDice) });
     } catch (err) {
-        state.lockedLocally = false;
-        document.getElementById("btn-lock-dice").disabled = false;
+        if (state.round?.id === round.id && state.round.attempt === round.attempt && state.round.phase === "LOCKING") {
+            state.lockedLocally = false;
+            document.getElementById("btn-lock-dice").disabled =
+                Date.now() + state.serverClockOffset >= new Date(state.round.ends_at).getTime();
+        }
         showGameError(err);
     }
 });
@@ -965,6 +973,10 @@ function startRoundTimer(round) {
         const now = Date.now() + (state.botMode ? 0 : state.serverClockOffset);
         const rem = Math.max(0, Math.ceil((endMs - now) / 1000));
         if (timerEl.textContent !== `${rem}s`) timerEl.textContent = `${rem}s`;
+        if (!state.botMode && state.round?.id === round.id && state.round.attempt === round.attempt &&
+            state.round.phase === "LOCKING" && !state.lockedLocally) {
+            document.getElementById("btn-lock-dice").disabled = rem <= 0;
+        }
         if (rem <= 0) {
             clearInterval(state.timerInterval);
             if (state.botMode) {
