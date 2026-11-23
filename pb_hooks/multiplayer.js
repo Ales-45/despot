@@ -27,37 +27,43 @@ function newRound(app, match, number, attConstraint, defConstraint) {
     return round;
 }
 
-function archiveRound(app, match, round, allowMissingParticipants = false) {
-    const winner = round.getString("round_winner");
+function archiveMatch(app, match) {
     const attacker = match.getString("attacker_id");
     const defender = match.getString("defender_id");
-    if ((winner !== "ATT" && winner !== "DEF") ||
-        (!allowMissingParticipants && (!attacker || !defender)) ||
-        (attacker && attacker === defender)) {
-        throw new Error("Cannot archive a round without a result and valid participants.");
+    const winner = match.getString("winner_id");
+    if (!attacker || !defender || attacker === defender ||
+        (winner !== attacker && winner !== defender)) {
+        throw new Error("Cannot archive a match without a result and valid participants.");
     }
-    for (const [user, side] of [[attacker, "ATT"], [defender, "DEF"]]) {
-        if (!user) continue;
-        const found = app.findRecordsByFilter("round_history",
-            "match_key = {:match} && round_number = {:round} && user = {:user}", "", 1, 0,
-            { match: match.id, round: round.getInt("round_number"), user });
+    const scores = {
+        [attacker]: match.getInt("att_score"),
+        [defender]: match.getInt("def_score")
+    };
+    for (const user of [attacker, defender]) {
+        const found = app.findRecordsByFilter("match_history",
+            "match_key = {:match} && user = {:user}", "", 1, 0, { match: match.id, user });
         if (found.length) continue;
-        const entry = new Record(app.findCollectionByNameOrId("round_history"));
+        const opponent = user === attacker ? defender : attacker;
+        const entry = new Record(app.findCollectionByNameOrId("match_history"));
         entry.set("user", user);
         entry.set("match_key", match.id);
-        entry.set("round_number", round.getInt("round_number"));
-        entry.set("result", winner === side ? "WIN" : "LOSS");
-        entry.set("points", winner === side ? round.getInt("points_awarded") : 0);
-        entry.set("recorded_at", new Date().toISOString());
+        entry.set("result", winner === user ? "WIN" : "LOSS");
+        entry.set("user_score", scores[user]);
+        entry.set("opponent_score", scores[opponent]);
+        entry.set("recorded_at", match.getString("finished_at") || new Date().toISOString());
         app.save(entry);
     }
 }
 
-function removeMatch(app, match, allowMissingParticipants = false) {
-    const rounds = app.findRecordsByFilter("rounds", "match_id = {:id}", "", 0, 0, { id: match.id });
-    for (const round of rounds) {
-        if (round.getString("phase") === "REVEALED") archiveRound(app, match, round, allowMissingParticipants);
+function removeMatch(app, match) {
+    if (match.getString("status") === "FINISHED") {
+        const attacker = match.getString("attacker_id");
+        const defender = match.getString("defender_id");
+        const winner = match.getString("winner_id");
+        if (attacker && defender && attacker !== defender &&
+            (winner === attacker || winner === defender)) archiveMatch(app, match);
     }
+    const rounds = app.findRecordsByFilter("rounds", "match_id = {:id}", "", 0, 0, { id: match.id });
     for (const round of rounds) app.delete(round);
     app.delete(match);
 }
@@ -66,7 +72,7 @@ function removeUserMatches(app, userId) {
     const matches = app.findRecordsByFilter("matches",
         "player_1 = {:user} || player_2 = {:user} || attacker_id = {:user} || defender_id = {:user} || winner_id = {:user}",
         "", 0, 0, { user: userId });
-    for (const match of matches) removeMatch(app, match, true);
+    for (const match of matches) removeMatch(app, match);
 }
 
 function cleanupMatches(app) {
@@ -79,7 +85,7 @@ function cleanupMatches(app) {
                 if (status === "WAITING") return;
                 const incomplete = !match.getString("player_1") || !match.getString("player_2");
                 if (incomplete) {
-                    removeMatch(tx, match, true);
+                    removeMatch(tx, match);
                     return;
                 }
                 const field = status === "FINISHED" ? "finished_at" : "last_activity";
@@ -132,8 +138,6 @@ function finishRound(app, match, round, lock) {
     round.set("resolution_log", outcome.steps);
     round.set("phase", "REVEALED");
     app.save(round);
-    archiveRound(app, match, round);
-
     const attScore = Math.min(3, match.getInt("att_score") + (outcome.roundWinner === "ATT" ? outcome.pointsAwarded : 0));
     const defScore = Math.min(3, match.getInt("def_score") + (outcome.roundWinner === "DEF" ? outcome.pointsAwarded : 0));
     match.set("att_score", attScore);
@@ -166,6 +170,7 @@ function finishRound(app, match, round, lock) {
         match.set("winner_id", winnerId);
         match.set("status", "FINISHED");
         match.set("finished_at", new Date().toISOString());
+        archiveMatch(app, match);
     } else {
         const number = round.getInt("round_number") + 1;
         if (number > 5) throw new BadRequestError("Could not determine the winner.");

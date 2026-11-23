@@ -1,54 +1,9 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
-  const legacy = [
-    "1795128462_create_despot_game_collections.js",
-    "1795128463_add_profile_fields.js",
-    "1795128464_restrict_user_visibility.js",
-    "1795128465_add_profile_avatar.js",
-    "1795128466_fix_scores_and_add_bot.js",
-    "1795128467_add_profile_preferences.js",
-    "1795128468_add_pin_attempt.js",
-    "1795128469_allow_waiting_match_join.js",
-    "1795128470_add_dice_text_fields.js",
-    "1795128471_secure_multiplayer.js",
-    "1795128472_round_history.js",
-    "1795128473_round_start.js",
-    "1795128474_initialize_elo.js",
-    "1795128475_limit_daily_elo.js",
-  ]
-  const applied = new DynamicModel({ count: 0 })
-  app.db().newQuery("SELECT COUNT(*) AS count FROM _migrations WHERE file IN (" +
-    legacy.map((_, index) => "{:file" + index + "}").join(",") + ")")
-    .bind(Object.fromEntries(legacy.map((file, index) => ["file" + index, file])))
-    .one(applied)
-
-  if (applied.count !== 0 && applied.count !== legacy.length) {
-    throw new Error("Incomplete legacy migrations; update using the previous version first.")
-  }
-
   const users = app.findCollectionByNameOrId("users")
-  if (applied.count === legacy.length) {
-    const matches = app.findCollectionByNameOrId("matches")
-    const rounds = app.findCollectionByNameOrId("rounds")
-    for (const name of ["round_locks", "match_pin_attempts", "round_history", "rated_pairs"]) {
-      app.findCollectionByNameOrId(name)
-    }
-    for (const [collection, fields] of [
-      [users, ["avatar"]],
-      [matches, ["is_bot", "bot_name", "pin_attempt"]],
-      [rounds, ["force_timeout", "att_dice_text", "def_dice_text"]],
-    ]) {
-      for (const field of fields) {
-        if (collection.fields.getByName(field)) collection.fields.removeByName(field)
-      }
-      app.save(collection)
-    }
-    return
-  }
-
   const existing = new DynamicModel({ count: 0 })
   app.db().newQuery("SELECT COUNT(*) AS count FROM _collections WHERE name IN " +
-    "('matches', 'rounds', 'round_locks', 'match_pin_attempts', 'round_history', 'rated_pairs')")
+    "('matches', 'rounds', 'round_locks', 'match_pin_attempts', 'round_history', 'match_history', 'rated_pairs')")
     .one(existing)
   if (existing.count || ["username", "elo", "profile_avatar", "theme", "language"].some(
     field => users.fields.getByName(field)
@@ -65,6 +20,7 @@ migrate((app) => {
   users.listRule = '@request.auth.id = id'
   users.viewRule = '@request.auth.id = id'
   users.updateRule = '@request.auth.id = id'
+  unmarshal({ "passwordAuth": { "enabled": false } }, users)
   app.save(users)
   for (const user of app.findRecordsByFilter("users", "", "", 0, 0)) {
     user.set("elo", 1000)
@@ -167,18 +123,18 @@ migrate((app) => {
   }))
   app.save(new Collection({
     type: "base",
-    name: "round_history",
+    name: "match_history",
     listRule: '@request.auth.id != "" && user = @request.auth.id',
     viewRule: '@request.auth.id != "" && user = @request.auth.id',
     fields: [
       { name: "user", type: "relation", collectionId: users.id, required: true, maxSelect: 1, cascadeDelete: true },
       { name: "match_key", type: "text", required: true, max: 32 },
-      { name: "round_number", type: "number", required: true, min: 1, max: 5 },
       { name: "result", type: "select", required: true, values: ["WIN", "LOSS"] },
-      { name: "points", type: "number", min: 0, max: 2 },
+      { name: "user_score", type: "number", min: 0, max: 3 },
+      { name: "opponent_score", type: "number", min: 0, max: 3 },
       { name: "recorded_at", type: "date", required: true },
     ],
-    indexes: ["CREATE UNIQUE INDEX idx_history_round_user ON round_history (match_key, round_number, user)"],
+    indexes: ["CREATE UNIQUE INDEX idx_match_history_match_user ON match_history (match_key, user)"],
   }))
   app.save(new Collection({
     type: "base",

@@ -659,7 +659,7 @@ textarea {
     color: var(--bg);
 }
 
-.round-history {
+.match-history {
     list-style: none;
     display: grid;
     gap: 0.5rem;

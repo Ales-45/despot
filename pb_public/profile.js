@@ -8,7 +8,7 @@ const translations = {
         deleteWarning: "Esta acción eliminará tu cuenta y no se puede deshacer. Tus partidas se cancelarán sin modificar el Elo.",
         username: "Nombre de usuario", player: "Jugador", chooseAvatar: "Elige tu imagen", changeAvatar: "Cambiar imagen de perfil", save: "Guardar",
         logout: "Cerrar sesión", deleteAccount: "Eliminar cuenta", confirmDelete: "Eliminar", cancel: "Cancelar",
-        history: "Historial de rondas", loadingHistory: "Cargando...", noHistory: "Aún no hay rondas.", round: "Ronda", win: "Victoria", loss: "Derrota", point: "punto", points: "puntos", historyError: "No se pudo cargar el historial.",
+        history: "Historial de partidas", loadingHistory: "Cargando...", noHistory: "Aún no hay partidas.", win: "Victoria", loss: "Derrota", score: "Marcador", historyError: "No se pudo cargar el historial.",
         invalidUsername: "El nombre debe tener entre 2 y 32 caracteres y solo contener letras, números, espacios, guiones o guiones bajos.",
         offensiveUsername: "El nombre contiene palabras no permitidas.",
         saved: "Perfil guardado.", saveError: "No se pudo guardar el perfil.", deleteError: "No se pudo eliminar la cuenta.",
@@ -20,7 +20,7 @@ const translations = {
         deleteWarning: "This action will permanently delete your account. Your matches will be canceled without changing Elo.",
         username: "Username", player: "Player", chooseAvatar: "Choose your image", changeAvatar: "Change profile image", save: "Save",
         logout: "Log out", deleteAccount: "Delete account", confirmDelete: "Delete", cancel: "Cancel",
-        history: "Round history", loadingHistory: "Loading...", noHistory: "No rounds yet.", round: "Round", win: "Victory", loss: "Defeat", point: "point", points: "points", historyError: "Could not load history.",
+        history: "Match history", loadingHistory: "Loading...", noHistory: "No matches yet.", win: "Victory", loss: "Defeat", score: "Score", historyError: "Could not load history.",
         invalidUsername: "The name must be 2 to 32 characters and contain only letters, numbers, spaces, hyphens or underscores.",
         offensiveUsername: "The name contains prohibited words.",
         saved: "Profile saved.", saveError: "Could not save the profile.", deleteError: "Could not delete the account.",
@@ -32,7 +32,7 @@ const translations = {
         deleteWarning: "Questa azione eliminerà definitivamente il tuo account. Le tue partite saranno annullate senza modificare l'Elo.",
         username: "Nome utente", player: "Giocatore", chooseAvatar: "Scegli la tua immagine", changeAvatar: "Cambia immagine del profilo", save: "Salva",
         logout: "Esci", deleteAccount: "Elimina account", confirmDelete: "Elimina", cancel: "Annulla",
-        history: "Cronologia dei turni", loadingHistory: "Caricamento...", noHistory: "Nessun turno.", round: "Turno", win: "Vittoria", loss: "Sconfitta", point: "punto", points: "punti", historyError: "Impossibile caricare la cronologia.",
+        history: "Cronologia delle partite", loadingHistory: "Caricamento...", noHistory: "Nessuna partita.", win: "Vittoria", loss: "Sconfitta", score: "Punteggio", historyError: "Impossibile caricare la cronologia.",
         invalidUsername: "Il nome deve contenere da 2 a 32 caratteri: solo lettere, numeri, spazi, trattini o trattini bassi.",
         offensiveUsername: "Il nome contiene parole non consentite.",
         saved: "Profilo salvato.", saveError: "Impossibile salvare il profilo.", deleteError: "Impossibile eliminare l'account.",
@@ -46,7 +46,7 @@ const avatarModal = setupModal(document.getElementById("avatar-modal"));
 
 function renderHistory() {
     const labels = translations[languageButton.dataset.language] || translations.ES;
-    const list = document.getElementById("round-history");
+    const list = document.getElementById("match-history");
     list.replaceChildren();
     if (!historyEntries.length) {
         const item = document.createElement("li");
@@ -57,18 +57,18 @@ function renderHistory() {
     for (const entry of historyEntries) {
         const item = document.createElement("li");
         const date = new Date(entry.recorded_at).toLocaleString(document.documentElement.lang);
-        item.textContent = `${date} · ${labels.round} ${entry.round_number} · ${entry.result === "WIN" ? labels.win : labels.loss} · ${entry.points} ${entry.points === 1 ? labels.point : labels.points}`;
+        item.textContent = `${date} · ${entry.result === "WIN" ? labels.win : labels.loss} · ${labels.score} ${entry.user_score}–${entry.opponent_score}`;
         list.append(item);
     }
 }
 
 async function loadHistory() {
     try {
-        historyEntries = await pb.collection("round_history").getFullList({ sort: "-recorded_at", requestKey: null });
+        historyEntries = await pb.collection("match_history").getFullList({ sort: "-recorded_at", requestKey: null });
         historyLoaded = true;
         renderHistory();
     } catch (error) {
-        document.getElementById("round-history").replaceChildren();
+        document.getElementById("match-history").replaceChildren();
         showProfileError(error, "historyError");
     }
 }
