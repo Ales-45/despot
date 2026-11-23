@@ -16,7 +16,7 @@
 <body>
     <a class="skip-link" href="#main-stage" data-i18n="skip">Saltar al contenido</a>
 
-    <!-- HEADER MINIMALISTA -->
+    <!-- comarca -->
     <header class="site-header">
         <button id="btn-home" class="logo-slot" title="Inicio" aria-label="Inicio" data-i18n-title="home" data-i18n-aria="home">
             <img src="assets/icon/logo.svg" alt="Despot">
@@ -44,7 +44,7 @@
         </nav>
     </header>
 
-    <!-- DIVISOR ORNAMENTAL RINCEAU (SVG puro, sin assets externos) -->
+    <!-- ricneau -->
     <svg class="rinceau-divider" width="100%" height="18" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <defs>
             <pattern id="gold-rinceau" x="0" y="0" width="64" height="18" patternUnits="userSpaceOnUse">
@@ -65,10 +65,10 @@
         <line x1="0" y1="17.5" x2="100%" y2="17.5" stroke="currentColor" stroke-opacity="0.22" stroke-width="0.75"/>
     </svg>
 
-    <!-- CONTENIDO PRINCIPAL DINÁMICO -->
+    <!-- contenido -->
     <main id="main-stage" class="main-stage" tabindex="-1">
 
-        <!-- VISTA 1: HOME / LISTADO DE PARTIDAS -->
+        <!-- lobbies aipac -->
         <section id="view-lobby" class="view active">
             <div class="lobby-actions">
                 <button id="btn-create-match" class="btn-solid icon-button"><img src="assets/icon/lobby.svg" alt=""><span data-i18n="createMatch">Crear partida</span></button>
@@ -97,9 +97,9 @@
             </div>
         </section>
 
-        <!-- VISTA 2: TABLERO DE JUEGO (Sin patrones Rinceau internos) -->
+        <!-- tablas -->
         <section id="view-board" class="view">
-            <!-- Barra superior de estado de partida -->
+            <!-- arbitro -->
             <div class="match-hud">
                 <div class="score-pill">
                     <span data-i18n="attacker">Atacante</span>
@@ -116,7 +116,7 @@
                 </div>
             </div>
 
-            <!-- Sub-fase A: Espera de rival -->
+            <!-- espera rival -->
             <div id="stage-waiting" class="board-substage hidden">
                 <button id="btn-close-match" class="btn-outline close-match-button" type="button" data-i18n="closeMatch">Cerrar partida</button>
                 <p><span data-i18n="shareCode">Comparte el código de sala:</span> <strong id="wait-code-display">----</strong></p>
@@ -125,7 +125,7 @@
                 <button id="btn-start-match" class="btn-solid hidden" type="button" data-i18n="startMatch">Iniciar partida</button>
             </div>
 
-            <!-- Sub-fase B: Elección de Rol (Fase 1) -->
+            <!-- rol -->
             <div id="stage-roles" class="board-substage hidden">
                 <h3 data-i18n="chooseRole">Elige tu Rol</h3>
                 <p id="role-coin-text" class="muted" data-i18n="roleCoinText">Si ambos eligen lo mismo, una moneda decidirá.</p>
@@ -136,14 +136,13 @@
                 <p id="role-status-msg" class="muted"></p>
             </div>
 
-            <!-- Sub-fase C: Combate en Espejo (Fases 2 y 3) -->
+            <!-- combate -->
             <div id="stage-combat" class="board-substage hidden">
-                <!-- Pista privada de Ballesteros (solo aparece si aplica) -->
+                <!-- pista ballestas -->
                 <div id="ballesteros-banner" class="hint-banner hidden" aria-label="Pista de Ballesteros" data-i18n-aria="hint">
                     <img id="ballesteros-icon" src="assets/icon/balestra.svg" alt="">
                 </div>
 
-                <!-- Formación Rival (Arriba) -->
                 <div class="army-row opponent-row">
                     <div class="section-slot">
                         <span class="die-face"><img class="die-box opp-die" id="opp-die-0" src="assets/r_dice/r1.svg" alt="Dado rival" data-i18n-alt="opponentDie"><span class="die-effects"></span></span>
@@ -156,10 +155,8 @@
                     </div>
                 </div>
 
-                <!-- Línea de choque (Resultados de cada sección) -->
                 <div class="clash-row" aria-hidden="true"></div>
 
-                <!-- Formación Propia (Abajo - Izquierda a Derecha = Vanguardia a Retaguardia si eres Atacante) -->
                 <div class="army-row player-row">
                     <div class="section-slot">
                         <div class="die-control">
@@ -184,7 +181,6 @@
                     </div>
                 </div>
 
-                <!-- Controles de Presupuesto, Restricción y Fijar -->
                 <div class="command-bar">
                     <div class="budget-info">
                         <span><span data-i18n="points">Puntos</span>: <strong id="points-used">3</strong> / <span id="points-max">11</span></span>

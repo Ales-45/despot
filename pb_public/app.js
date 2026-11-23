@@ -225,9 +225,7 @@ function showToast(key, code = "400", kind = "error") {
     showNotice(t(key), code, kind, t("close"), 7000, key);
 }
 
-// ----------------------------------------------------------------------------
-// 1. NAVEGACIÓN, TEMA E IDIOMA (UI Shell)
-// ----------------------------------------------------------------------------
+// tema e idioma
 function showView(viewId) {
     const view = document.getElementById(viewId);
     const changed = !view.classList.contains("active");
@@ -253,7 +251,7 @@ document.getElementById("btn-home").addEventListener("click", () => {
 
 setupAuthMenu(pb, loginWithGoogle);
 
-// Tema oscuro por defecto, alternable a claro
+// chiaroscuro por defecto
 document.getElementById("btn-theme").addEventListener("click", () => {
     const root = document.documentElement;
     const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
@@ -282,9 +280,7 @@ setupLanguageMenu(languageButton, languageMenu, (next) => {
     }
 });
 
-// ----------------------------------------------------------------------------
-// 2. AUTENTICACIÓN CON GOOGLE
-// ----------------------------------------------------------------------------
+// google el gran hermano te vigila
 async function ensureAuth() {
     if (pb.authStore.isValid) {
         updateAuthButton();
@@ -326,9 +322,7 @@ function updateAuthButton() {
     }
 }
 
-// ----------------------------------------------------------------------------
-// 3. LOBBY: CREAR, LISTAR Y UNIRSE A SALAS
-// ----------------------------------------------------------------------------
+// 300 millones para israel
 async function loadOpenMatches() {
     const listEl = document.getElementById("matches-list");
     if (!pb.authStore.isValid) {
@@ -584,9 +578,7 @@ function handleMatchClosed(matchId) {
     showToast(message, "200", "success");
 }
 
-// ----------------------------------------------------------------------------
-// 4. SINCRONIZACIÓN EN TIEMPO REAL DE LA PARTIDA Y RONDAS
-// ----------------------------------------------------------------------------
+// SIncronizar partidas
 async function enterMatch(matchId) {
     state.botMode = false;
     state.round = null;
@@ -820,7 +812,7 @@ function renderMatchState() {
     }
 }
 
-// Fase 1: Selección de Rol
+// seleccion rol
 document.querySelectorAll("#stage-roles button").forEach(btn => {
     btn.addEventListener("click", async () => {
         const choice = btn.getAttribute("data-role");
@@ -845,16 +837,13 @@ document.querySelectorAll("#stage-roles button").forEach(btn => {
     });
 });
 
-// Etiquetas en espejo según seas Atacante o Defensor
+// etiqueras segun rol
 function setupPerspectiveLabels() {
     const isAtt = state.match.attacker_id === humanId();
     const maxPts = isAtt ? 11 : 10;
     document.getElementById("points-max").textContent = maxPts;
 }
 
-// ----------------------------------------------------------------------------
-// 5. LÓGICA DE RONDA, DADOS, RELOJ Y BALLESTEROS
-// ----------------------------------------------------------------------------
 function handleRoundUpdate(round) {
     const isNewRound = !state.round || state.round.id !== round.id || state.round.attempt !== round.attempt;
     state.round = round;
@@ -877,7 +866,7 @@ function handleRoundUpdate(round) {
         }
     }
     updateRoundLabels(round);
-    // Pista privada de Ballesteros (solo si el rival fijó primero y queda tiempo)
+    // Pista de virote ballesta
     const banner = document.getElementById("ballesteros-banner");
     const rivalLockedFirst = (isAtt && round.first_locker === "DEF") || (!isAtt && round.first_locker === "ATT");
     banner.classList.toggle("hidden",
@@ -964,7 +953,7 @@ document.getElementById("btn-lock-dice").addEventListener("click", async () => {
         showGameError(err);
     }
 });
-// Reloj sincronizado con ends_at del servidor
+// reloj como la peli esa del tiempo es moneda
 function startRoundTimer(round) {
     clearInterval(state.timerInterval);
     const timerEl = document.getElementById("hud-timer");
@@ -1004,7 +993,7 @@ function startRoundTimer(round) {
         }
     }, 250);
 }
-// Animación secuencial izquierda -> derecha (Vanguardia -> Centro -> Retaguardia)
+// animacion de combate
 function resetResolution() {
     document.querySelectorAll(".die-face").forEach(die => die.classList.remove("clash-winner"));
     document.querySelectorAll(".die-effects").forEach(effects => effects.replaceChildren());
@@ -1094,7 +1083,7 @@ async function loadFinalResults(matchId) {
 
 function animateRoundResolution(round, isAtt) {
     const activeRound = state.round;
-    // Si eres Defensor, invertimos visualmente el orden para que tu frente coincida en espejo con el tablero
+    // defensor se mira al espejo
     const myFinal = isAtt ? round.att_dice : round.def_dice;
     const oppFinal = isAtt
         ? [round.def_dice[2], round.def_dice[1], round.def_dice[0]]
@@ -1129,7 +1118,7 @@ function animateRoundResolution(round, isAtt) {
             .querySelector(".die-effects").append(effectIcon(icon));
     }
     for (let i = 0; i < 3; i++) {
-        // El combate siempre se resuelve de izquierda a derecha del Atacante (sección 0 -> 1 -> 2)
+        // arranque de combate desde atacante
         const visualSlot = isAtt ? i : 2 - i;
         setTimeout(() => {
             if (state.round !== activeRound || activeRound?.phase !== "REVEALED") return;
