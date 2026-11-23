@@ -20,7 +20,10 @@ migrate((app) => {
   users.listRule = '@request.auth.id = id'
   users.viewRule = '@request.auth.id = id'
   users.updateRule = '@request.auth.id = id'
-  unmarshal({ "passwordAuth": { "enabled": false } }, users)
+  unmarshal({
+    "passwordAuth": { "enabled": false },
+    "oauth2": { "enabled": true },
+  }, users)
   app.save(users)
   for (const user of app.findRecordsByFilter("users", "", "", 0, 0)) {
     user.set("elo", 1000)

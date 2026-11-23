@@ -15,7 +15,7 @@ Requirements:
 Run PocketBase from the repository root with the project's hooks and migrations:
 
 ```sh
-./.local/bin/pocketbase serve --http=127.0.0.1:8090 --publicDir=pb_public --migrationsDir=pb_migrations --hooksDir=pb_hooks
+./.local/bin/pocketbase serve --http=127.0.0.1:8090 --dir=.local/bin/pb_data --publicDir=pb_public --migrationsDir=pb_migrations --hooksDir=pb_hooks
 ```
 
 Open `http://127.0.0.1:8090/` in the browser.
